@@ -33,6 +33,7 @@ const GameScreen = ({ navigation, route }) => {
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [currentRound, setCurrentRound] = useState(1);
   const [roundPoints, setRoundPoints] = useState('');
+  const [displayValue, setDisplayValue] = useState('0');
   const [gameId, setGameId] = useState(null);
   const [roundHistory, setRoundHistory] = useState([]);
   const [gameState, setGameState] = useState('playing'); // playing, ended
@@ -73,6 +74,7 @@ const GameScreen = ({ navigation, route }) => {
         setRoundHistory([]);
         setGameId(newGameId);
         setGameState('playing');
+        setDisplayValue('0');
       }
     } catch (error) {
       console.error('Error initializing game:', error);
@@ -96,6 +98,95 @@ const GameScreen = ({ navigation, route }) => {
     }
   };
 
+  const handleKeypadPress = (value) => {
+    if (value === 'clear') {
+      setDisplayValue('0');
+      setRoundPoints('');
+    } else if (value === 'backspace') {
+      if (displayValue.length <= 1) {
+        setDisplayValue('0');
+        setRoundPoints('');
+      } else {
+        const newValue = displayValue.slice(0, -1);
+        setDisplayValue(newValue);
+        setRoundPoints(newValue === '0' ? '' : newValue);
+      }
+    } else if (value === '-') {
+      if (displayValue === '0') {
+        setDisplayValue('-');
+        setRoundPoints('-');
+      } else if (!displayValue.includes('-')) {
+        const newValue = '-' + displayValue;
+        setDisplayValue(newValue);
+        setRoundPoints(newValue);
+      }
+    } else if (value === 'enter') {
+      handleAddPoints();
+    } else {
+      // Number pressed
+      if (displayValue === '0') {
+        setDisplayValue(value);
+        setRoundPoints(value);
+      } else if (displayValue === '-') {
+        const newValue = '-' + value;
+        setDisplayValue(newValue);
+        setRoundPoints(newValue);
+      } else {
+        const newValue = displayValue + value;
+        setDisplayValue(newValue);
+        setRoundPoints(newValue);
+      }
+    }
+  };
+
+  const renderCustomKeypad = () => {
+    const keypadButtons = [
+      [{ label: '1', value: '1' }, { label: '2', value: '2' }, { label: '3', value: '3' }],
+      [{ label: '4', value: '4' }, { label: '5', value: '5' }, { label: '6', value: '6' }],
+      [{ label: '7', value: '7' }, { label: '8', value: '8' }, { label: '9', value: '9' }],
+      [{ label: '±', value: '-' }, { label: '0', value: '0' }, { label: '⌫', value: 'backspace' }],
+      [{ label: '🔄 Wyczyść', value: 'clear', span: 1.5 }, { label: '✓ Dodaj Punkty', value: 'enter', span: 2.5 }]
+    ];
+
+    return (
+      <View style={styles.keypadContainer}>
+        {keypadButtons.map((row, rowIndex) => (
+          <View key={rowIndex} style={styles.keypadRow}>
+            {row.map((button, buttonIndex) => (
+              <TouchableOpacity
+                key={buttonIndex}
+                style={[
+                  styles.keypadButton,
+                  button.span && { flex: button.span },
+                  button.value === 'enter' && styles.keypadButtonEnter,
+                  button.value === 'clear' && styles.keypadButtonClear
+                ]}
+                onPress={() => handleKeypadPress(button.value)}
+              >
+                <LinearGradient
+                  colors={
+                    button.value === 'enter' ? dragonGradients.fire :
+                    button.value === 'clear' ? dragonGradients.purple :
+                    button.value === '-' ? dragonGradients.gold :
+                    dragonGradients.ocean
+                  }
+                  style={styles.keypadButtonGradient}
+                >
+                  <Text style={[
+                    styles.keypadButtonText,
+                    (button.value === 'enter' || button.value === 'clear') && styles.keypadButtonTextSmall
+                  ]}>
+                    {button.label}
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            ))}
+          </View>
+        ))}
+      </View>
+    );
+  };
+
   const handleAddPoints = async () => {
     const points = parseInt(roundPoints);
     
@@ -113,6 +204,7 @@ const GameScreen = ({ navigation, route }) => {
 
     setPlayers(updatePlayerRankings(updatedPlayers));
     setRoundPoints('');
+    setDisplayValue('0');
     
     // Move to next player or complete round
     if (currentPlayerIndex < players.length - 1) {
@@ -152,6 +244,7 @@ const GameScreen = ({ navigation, route }) => {
       setPlayers(updatePlayerRankings(playersForNextRound));
       setCurrentPlayerIndex(0);
       setCurrentRound(currentRound + 1);
+      setDisplayValue('0');
 
       // Check if game should end
       if (checkGameEnd(playersForNextRound)) {
@@ -200,6 +293,7 @@ const GameScreen = ({ navigation, route }) => {
       setPlayers(updatePlayerRankings(updatedPlayers));
       setCurrentPlayerIndex(prevPlayerIndex);
       setRoundPoints('');
+      setDisplayValue('0');
     } else if (currentRound > 1 && roundHistory.length > 0) {
       Alert.alert(
         'Cofnij rundę',
@@ -230,6 +324,7 @@ const GameScreen = ({ navigation, route }) => {
     setCurrentRound(currentRound - 1);
     setRoundHistory(roundHistory.slice(0, -1));
     setRoundPoints('');
+    setDisplayValue('0');
   };
 
   const renderPlayer = ({ item, index }) => {
@@ -360,26 +455,21 @@ const GameScreen = ({ navigation, route }) => {
               showsVerticalScrollIndicator={false}
             />
           </View>
-        </View>
-
-        {gameState === 'playing' && (
-          <View style={styles.inputContainer}>
+        </View>          {gameState === 'playing' && (
+            <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>
                 Punkty dla: {players[currentPlayerIndex]?.name}
               </Text>
               
-              <TextInput
-                style={[globalStyles.textInput, styles.pointsInput]}
-                placeholder="Wprowadź punkty (może być ujemne)"
-                value={roundPoints}
-                onChangeText={setRoundPoints}
-                keyboardType="numbers-and-punctuation"
-                maxLength={4}
-              />
+              <View style={styles.displayContainer}>
+                <Text style={styles.displayText}>{displayValue}</Text>
+              </View>
               
-              <View style={styles.gameControls}>
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {renderCustomKeypad()}
+                
                 <TouchableOpacity 
-                  style={[globalStyles.outlineButton, styles.controlButton]}
+                  style={[globalStyles.outlineButton, styles.backButton]}
                   onPress={handlePreviousPlayer}
                   disabled={currentPlayerIndex === 0 && currentRound === 1}
                 >
@@ -387,18 +477,9 @@ const GameScreen = ({ navigation, route }) => {
                     ← Cofnij
                   </Text>
                 </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={[globalStyles.button, styles.controlButton]}
-                  onPress={handleAddPoints}
-                >
-                  <Text style={globalStyles.buttonText}>
-                    {currentPlayerIndex < players.length - 1 ? 'Kolejny gracz' : 'Zakończ rundę'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
+              </ScrollView>
             </View>
-        )}
+          )}
       </LinearGradient>
     </SafeAreaView>
   );
@@ -493,6 +574,60 @@ const styles = {
     bottom: 20,
     left: 20,
     right: 20,
+    maxHeight: '75%',
+  },
+  displayContainer: {
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    borderRadius: 15,
+    padding: 20,
+    marginBottom: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 70,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  displayText: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: colors.primary,
+    textAlign: 'center',
+    minWidth: 100,
+  },
+  keypadContainer: {
+    marginBottom: 15,
+  },
+  keypadRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  keypadButton: {
+    flex: 1,
+    marginHorizontal: 3,
+    borderRadius: 12,
+    overflow: 'hidden',
+    ...globalStyles.shadow,
+  },
+  keypadButtonGradient: {
+    paddingVertical: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+    minHeight: 50,
+  },
+  keypadButtonText: {
+    color: colors.surface,
+    fontSize: 22,
+    fontWeight: 'bold',
+  },
+  keypadButtonTextSmall: {
+    fontSize: 14,
+  },
+  backButton: {
+    alignSelf: 'center',
+    minWidth: 120,
+    marginTop: 15,
   },
   inputLabel: {
     fontSize: 18,
@@ -500,20 +635,6 @@ const styles = {
     color: colors.text,
     textAlign: 'center',
     marginBottom: 15,
-  },
-  pointsInput: {
-    fontSize: 24,
-    textAlign: 'center',
-    fontWeight: 'bold',
-  },
-  gameControls: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 20,
-  },
-  controlButton: {
-    flex: 1,
-    marginHorizontal: 5,
   },
   endGameTitle: {
     fontSize: 32,
