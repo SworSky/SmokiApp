@@ -41,11 +41,24 @@ export const calculatePlayerRankings = (players) => {
   // Sort players by total points (ascending - lower is better) for ranking only
   const sortedByPoints = [...players].sort((a, b) => a.totalPoints - b.totalPoints);
   
-  // Create a ranking map
+  // Create a ranking map with ex aequo support
   const rankingMap = {};
-  sortedByPoints.forEach((player, index) => {
-    rankingMap[player.id] = index + 1;
-  });
+  let currentRank = 1;
+  
+  for (let i = 0; i < sortedByPoints.length; i++) {
+    const player = sortedByPoints[i];
+    
+    if (i > 0 && sortedByPoints[i - 1].totalPoints === player.totalPoints) {
+      // Same points as previous player - same rank
+      rankingMap[player.id] = rankingMap[sortedByPoints[i - 1].id];
+    } else {
+      // Different points - assign current rank
+      rankingMap[player.id] = currentRank;
+    }
+    
+    // Update current rank for next iteration
+    currentRank = i + 2; // Next possible rank after current position
+  }
   
   // Return players in original order but with updated rankings
   return players.map(player => ({
@@ -59,9 +72,22 @@ export const updatePlayerRankings = (players) => {
   const sortedByPoints = [...players].sort((a, b) => a.totalPoints - b.totalPoints);
   
   const rankingMap = {};
-  sortedByPoints.forEach((player, index) => {
-    rankingMap[player.id] = index + 1;
-  });
+  let currentRank = 1;
+  
+  for (let i = 0; i < sortedByPoints.length; i++) {
+    const player = sortedByPoints[i];
+    
+    if (i > 0 && sortedByPoints[i - 1].totalPoints === player.totalPoints) {
+      // Same points as previous player - same rank
+      rankingMap[player.id] = rankingMap[sortedByPoints[i - 1].id];
+    } else {
+      // Different points - assign current rank
+      rankingMap[player.id] = currentRank;
+    }
+    
+    // Update current rank for next iteration
+    currentRank = i + 2; // Next possible rank after current position
+  }
   
   return players.map(player => ({
     ...player,
@@ -74,6 +100,11 @@ export const checkGameEnd = (players) => {
 };
 
 export const getGameWinners = (players) => {
-  const sortedPlayers = [...players].sort((a, b) => a.totalPoints - b.totalPoints);
-  return sortedPlayers;
+  // Return players sorted by place, then by points for same place
+  return [...players].sort((a, b) => {
+    if (a.place !== b.place) {
+      return a.place - b.place;
+    }
+    return a.totalPoints - b.totalPoints;
+  });
 };

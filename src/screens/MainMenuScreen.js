@@ -52,7 +52,7 @@ const MainMenuScreen = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1 }} edges={['left', 'right']}>
       <LinearGradient
         colors={dragonGradients.fire}
         style={globalStyles.container}
@@ -60,7 +60,7 @@ const MainMenuScreen = ({ navigation }) => {
       <View style={globalStyles.centered}>
         <View style={styles.titleContainer}>
           <Text style={styles.gameTitle}>🐉 SMOKI 🐉</Text>
-          <Text style={styles.subtitle}>Gra Karciana</Text>
+          <Text style={styles.subtitle}>by Maślak</Text>
         </View>
 
         <View style={styles.menuContainer}>

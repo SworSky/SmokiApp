@@ -114,7 +114,7 @@ const PlayersScreen = ({ navigation }) => {
             style={[styles.actionButton, styles.deleteButton]}
             onPress={() => handleDeletePlayer(item)}
           >
-            <Text style={styles.actionButtonText}>🗑️</Text>
+            <Text style={styles.deleteButtonText}>🗑️</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -141,7 +141,7 @@ const PlayersScreen = ({ navigation }) => {
   );
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1 }} edges={['left', 'right']}>
       <LinearGradient
         colors={dragonGradients.purple}
         style={globalStyles.container}
@@ -209,17 +209,17 @@ const PlayersScreen = ({ navigation }) => {
               
               <View style={styles.modalButtons}>
                 <TouchableOpacity 
-                  style={[globalStyles.outlineButton, styles.modalButton]}
+                  style={[styles.cancelButton, styles.modalButton]}
                   onPress={() => setModalVisible(false)}
                 >
-                  <Text style={globalStyles.outlineButtonText}>Anuluj</Text>
+                  <Text style={styles.cancelButtonText}>Anuluj</Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity 
-                  style={[globalStyles.button, styles.modalButton]}
+                  style={[globalStyles.button, styles.modalButton, styles.saveButton]}
                   onPress={handleSavePlayer}
                 >
-                  <Text style={globalStyles.buttonText}>Zapisz</Text>
+                  <Text style={[globalStyles.buttonText, styles.saveButtonText]}>Zapisz</Text>
                 </TouchableOpacity>
               </View>
             </LinearGradient>
@@ -239,7 +239,7 @@ const styles = {
   backButton: {
     position: 'absolute',
     left: 0,
-    top: 0,
+    top: 10,
     padding: 10,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 20,
@@ -284,16 +284,20 @@ const styles = {
     flexDirection: 'row',
   },
   actionButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
     borderRadius: 20,
     padding: 8,
     marginLeft: 8,
   },
   deleteButton: {
-    backgroundColor: 'rgba(244, 67, 54, 0.3)',
+    backgroundColor: 'rgba(244, 67, 54, 0.7)',
   },
   actionButtonText: {
     fontSize: 16,
+  },
+  deleteButtonText: {
+    fontSize: 16,
+    color: colors.surface,
   },
   statsContainer: {
     flexDirection: 'row',
@@ -358,7 +362,28 @@ const styles = {
   },
   modalButton: {
     flex: 1,
-    marginHorizontal: 10,
+    marginHorizontal: 5,
+  },
+  cancelButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 25,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: colors.primary,
+  },
+  cancelButtonText: {
+    color: colors.primary,
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  saveButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+  },
+  saveButtonText: {
+    fontSize: 14,
   },
 };
 

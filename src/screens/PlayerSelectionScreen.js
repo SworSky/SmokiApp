@@ -80,7 +80,7 @@ const PlayerSelectionScreen = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1 }} edges={['left', 'right']}>
       <LinearGradient
         colors={dragonGradients.green}
         style={globalStyles.container}
@@ -161,7 +161,7 @@ const styles = {
   backButton: {
     position: 'absolute',
     left: 0,
-    top: 0,
+    top: 10,
     padding: 10,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 20,

@@ -167,9 +167,11 @@ const GameScreen = ({ navigation, route }) => {
     try {
       const winners = getGameWinners(finalPlayers);
       
-      // Update player statistics
-      for (let i = 0; i < winners.length; i++) {
-        await updatePlayerStats(winners[i].id, i + 1);
+      // Update player statistics based on actual place (supporting ex aequo)
+      for (const player of winners) {
+        if (player.place <= 3) {
+          await updatePlayerStats(player.id, player.place);
+        }
       }
       
       // Mark game as completed
@@ -232,7 +234,12 @@ const GameScreen = ({ navigation, route }) => {
 
   const renderPlayer = ({ item, index }) => {
     const isCurrentPlayer = index === currentPlayerIndex && gameState === 'playing';
-    const placeEmojis = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣'];
+    const getPlaceDisplay = (place) => {
+      if (place === 1) return '🥇';
+      if (place === 2) return '🥈';
+      if (place === 3) return '🥉';
+      return `${place}.`;
+    };
     
     return (
       <LinearGradient
@@ -241,7 +248,7 @@ const GameScreen = ({ navigation, route }) => {
       >
         <View style={styles.playerRank}>
           <Text style={styles.rankText}>
-            {placeEmojis[item.place - 1] || item.place}
+            {getPlaceDisplay(item.place)}
           </Text>
         </View>
         
@@ -269,8 +276,15 @@ const GameScreen = ({ navigation, route }) => {
   };
 
   if (gameState === 'ended') {
+    const getPlaceDisplay = (place) => {
+      if (place === 1) return '🥇';
+      if (place === 2) return '🥈';
+      if (place === 3) return '🥉';
+      return `${place}.`;
+    };
+
     return (
-      <SafeAreaView style={{ flex: 1 }}>
+      <SafeAreaView style={{ flex: 1 }} edges={['left', 'right']}>
         <LinearGradient
           colors={dragonGradients.gold}
           style={globalStyles.container}
@@ -278,9 +292,9 @@ const GameScreen = ({ navigation, route }) => {
           <View style={[globalStyles.padding, globalStyles.centered]}>
             <Text style={styles.endGameTitle}>🎉 Koniec Gry! 🎉</Text>
             <View style={styles.finalResults}>
-              {getGameWinners(players).map((player, index) => (
+              {getGameWinners(players).map((player) => (
                 <Text key={player.id} style={styles.finalResultText}>
-                  {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`} {player.name} - {player.totalPoints} pkt
+                  {getPlaceDisplay(player.place)} {player.name} - {player.totalPoints} pkt
                 </Text>
               ))}
             </View>
@@ -312,7 +326,7 @@ const GameScreen = ({ navigation, route }) => {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1 }} edges={['left', 'right']}>
       <LinearGradient
         colors={dragonGradients.green}
         style={globalStyles.container}
@@ -398,7 +412,7 @@ const styles = {
   backButton: {
     position: 'absolute',
     left: 0,
-    top: 0,
+    top: 10,
     padding: 10,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 20,
