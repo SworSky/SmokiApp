@@ -19,6 +19,7 @@ const PlayerOrderScreen = ({ navigation, route }) => {
   const [orderedPlayers, setOrderedPlayers] = useState([...selectedPlayers]);
   const [draggedIndex, setDraggedIndex] = useState(null);
   const [dragY] = useState(new Animated.Value(0));
+  const [targetIndex, setTargetIndex] = useState(null);
 
   const ITEM_HEIGHT = 88;
 
@@ -29,29 +30,44 @@ const PlayerOrderScreen = ({ navigation, route }) => {
 
   const onGestureEvent = Animated.event(
     [{ nativeEvent: { translationY: dragY } }],
-    { useNativeDriver: false }
+    { 
+      useNativeDriver: false,
+      listener: (event) => {
+        if (draggedIndex !== null) {
+          const { translationY } = event.nativeEvent;
+          const newTargetIndex = Math.max(0, Math.min(
+            orderedPlayers.length - 1,
+            Math.round(draggedIndex + translationY / ITEM_HEIGHT)
+          ));
+          
+          // Only update target index for visual feedback, don't reorder array yet
+          if (newTargetIndex !== targetIndex) {
+            setTargetIndex(newTargetIndex);
+          }
+        }
+      }
+    }
   );
 
   const onHandlerStateChange = (event, index) => {
     if (event.nativeEvent.state === State.BEGAN) {
       setDraggedIndex(index);
+      setTargetIndex(index);
+      dragY.setValue(0);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     } else if (event.nativeEvent.state === State.END || event.nativeEvent.state === State.CANCELLED) {
-      if (draggedIndex !== null) {
-        const { translationY } = event.nativeEvent;
-        const newIndex = Math.round(index + translationY / ITEM_HEIGHT);
-        const clampedIndex = Math.max(0, Math.min(orderedPlayers.length - 1, newIndex));
-        
-        if (clampedIndex !== index) {
-          const newOrder = [...orderedPlayers];
-          const draggedItem = newOrder.splice(index, 1)[0];
-          newOrder.splice(clampedIndex, 0, draggedItem);
-          setOrderedPlayers(newOrder);
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        }
+      if (draggedIndex !== null && targetIndex !== null && targetIndex !== draggedIndex) {
+        // Only update the array when drag ends
+        const newOrder = [...orderedPlayers];
+        const draggedItem = newOrder.splice(draggedIndex, 1)[0];
+        newOrder.splice(targetIndex, 0, draggedItem);
+        setOrderedPlayers(newOrder);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
       
       setDraggedIndex(null);
+      setTargetIndex(null);
+      
       Animated.spring(dragY, {
         toValue: 0,
         useNativeDriver: false,
@@ -81,46 +97,62 @@ const PlayerOrderScreen = ({ navigation, route }) => {
 
   const renderPlayer = (item, index) => {
     const isDragging = draggedIndex === index;
+    const isTargetSlot = targetIndex === index && draggedIndex !== null && draggedIndex !== index;
     
     return (
-      <PanGestureHandler
-        key={`${item.id}-${index}`}
-        onGestureEvent={isDragging ? onGestureEvent : undefined}
-        onHandlerStateChange={(event) => onHandlerStateChange(event, index)}
-        activeOffsetY={[-5, 5]}
-        failOffsetX={[-50, 50]}
-      >
-        <Animated.View
-          style={[
-            styles.playerCardContainer,
-            isDragging && {
-              transform: [{ translateY: dragY }],
-              zIndex: 1000,
-              elevation: 5,
-            }
-          ]}
+      <View key={`${item.id}-${index}`}>
+        {/* Show drop zone indicator above target slot */}
+        {isTargetSlot && draggedIndex > index && (
+          <View style={styles.dropZone}>
+            <Text style={styles.dropZoneText}>Drop here</Text>
+          </View>
+        )}
+        
+        <PanGestureHandler
+          onGestureEvent={isDragging ? onGestureEvent : undefined}
+          onHandlerStateChange={(event) => onHandlerStateChange(event, index)}
+          activeOffsetY={[-5, 5]}
+          failOffsetX={[-50, 50]}
         >
-          <LinearGradient
-            colors={isDragging ? dragonGradients.fire : dragonGradients.purple}
-            style={[styles.playerCard, isDragging && styles.draggedCard]}
+          <Animated.View
+            style={[
+              styles.playerCardContainer,
+              isDragging && {
+                transform: [{ translateY: dragY }],
+                zIndex: 1000,
+                elevation: 10,
+              }
+            ]}
           >
-            <View style={styles.playerOrder}>
-              <Text style={styles.orderNumber}>{index + 1}</Text>
-            </View>
-            
-            <View style={styles.playerInfo}>
-              <Text style={styles.playerName}>🐉 {item.name}</Text>
-              <Text style={styles.playerStats}>
-                🎮 {item.totalGames} gier | 🥇 {item.firstPlace}
-              </Text>
-            </View>
-            
-            <View style={styles.dragHandle}>
-              <Text style={styles.dragHandleText}>⋮⋮</Text>
-            </View>
-          </LinearGradient>
-        </Animated.View>
-      </PanGestureHandler>
+            <LinearGradient
+              colors={isDragging ? dragonGradients.fire : dragonGradients.purple}
+              style={[styles.playerCard, isDragging && styles.draggedCard]}
+            >
+              <View style={styles.playerOrder}>
+                <Text style={styles.orderNumber}>{index + 1}</Text>
+              </View>
+              
+              <View style={styles.playerInfo}>
+                <Text style={styles.playerName}>🐉 {item.name}</Text>
+                <Text style={styles.playerStats}>
+                  🎮 {item.totalGames} gier | 🥇 {item.firstPlace}
+                </Text>
+              </View>
+              
+              <View style={styles.dragHandle}>
+                <Text style={styles.dragHandleText}>⋮⋮</Text>
+              </View>
+            </LinearGradient>
+          </Animated.View>
+        </PanGestureHandler>
+        
+        {/* Show drop zone indicator below target slot */}
+        {isTargetSlot && draggedIndex < index && (
+          <View style={styles.dropZone}>
+            <Text style={styles.dropZoneText}>Drop here</Text>
+          </View>
+        )}
+      </View>
     );
   };
 
@@ -245,6 +277,22 @@ const styles = {
     elevation: 10,
     borderWidth: 2,
     borderColor: 'rgba(255, 255, 255, 0.5)',
+  },
+  dropZone: {
+    height: 40,
+    backgroundColor: 'rgba(255, 107, 53, 0.3)',
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 5,
+  },
+  dropZoneText: {
+    color: colors.primary,
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   playersContainer: {
     flex: 1,

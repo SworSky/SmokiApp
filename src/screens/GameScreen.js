@@ -327,14 +327,15 @@ const GameScreen = ({ navigation, route }) => {
     setDisplayValue('0');
   };
 
+  const getPlaceDisplay = (place) => {
+    if (place === 1) return '🥇';
+    if (place === 2) return '🥈';
+    if (place === 3) return '🥉';
+    return `${place}.`;
+  };
+
   const renderPlayer = ({ item, index }) => {
     const isCurrentPlayer = index === currentPlayerIndex && gameState === 'playing';
-    const getPlaceDisplay = (place) => {
-      if (place === 1) return '🥇';
-      if (place === 2) return '🥈';
-      if (place === 3) return '🥉';
-      return `${place}.`;
-    };
     
     return (
       <LinearGradient
@@ -343,18 +344,18 @@ const GameScreen = ({ navigation, route }) => {
       >
         <View style={styles.playerRank}>
           <Text style={styles.rankText}>
-            {getPlaceDisplay(item.place)}
+            {getPlaceDisplay(item.place || 1)}
           </Text>
         </View>
         
         <View style={styles.playerInfo}>
           <Text style={styles.playerName}>
-            {isCurrentPlayer ? '▶️ ' : '🐉 '}{item.name}
+            {isCurrentPlayer ? '▶️ ' : '🐉 '}{item.name || 'Nieznany gracz'}
           </Text>
           <Text style={styles.playerPoints}>
-            Punkty: {item.totalPoints}
+            Punkty: {item.totalPoints || 0}
           </Text>
-          {item.currentRoundPoints > 0 && (
+          {item.currentRoundPoints && item.currentRoundPoints > 0 && (
             <Text style={styles.roundPoints}>
               Runda: +{item.currentRoundPoints}
             </Text>
@@ -371,13 +372,6 @@ const GameScreen = ({ navigation, route }) => {
   };
 
   if (gameState === 'ended') {
-    const getPlaceDisplay = (place) => {
-      if (place === 1) return '🥇';
-      if (place === 2) return '🥈';
-      if (place === 3) return '🥉';
-      return `${place}.`;
-    };
-
     return (
       <SafeAreaView style={{ flex: 1 }} edges={['left', 'right']}>
         <LinearGradient
@@ -455,7 +449,9 @@ const GameScreen = ({ navigation, route }) => {
               showsVerticalScrollIndicator={false}
             />
           </View>
-        </View>          {gameState === 'playing' && (
+        </View>
+          
+          {gameState === 'playing' && (
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>
                 Punkty dla: {players[currentPlayerIndex]?.name}
