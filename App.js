@@ -2,6 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // Import screens
 import MainMenuScreen from './src/screens/MainMenuScreen';
@@ -14,15 +15,16 @@ const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
-    <NavigationContainer>
-      <StatusBar style="light" backgroundColor="#FF6B35" />
-      <Stack.Navigator 
-        initialRouteName="MainMenu"
-        screenOptions={{
-          headerShown: false,
-          gestureEnabled: false,
-        }}
-      >
+    <SafeAreaProvider>
+      <NavigationContainer>
+        <StatusBar style="light" backgroundColor="#FF6B35" />
+        <Stack.Navigator 
+          initialRouteName="MainMenu"
+          screenOptions={{
+            headerShown: false,
+            gestureEnabled: false,
+          }}
+        >
         <Stack.Screen 
           name="MainMenu" 
           component={MainMenuScreen} 
@@ -43,7 +45,8 @@ export default function App() {
           name="Game" 
           component={GameScreen} 
         />
-      </Stack.Navigator>
-    </NavigationContainer>
+        </Stack.Navigator>
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
 }

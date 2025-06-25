@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, ImageBackground, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { globalStyles, colors, dragonGradients } from '../styles/globalStyles';
 import { initDatabase, getActiveGame } from '../services/database';
 import { loadGameState } from '../services/gameService';
@@ -51,10 +52,11 @@ const MainMenuScreen = ({ navigation }) => {
   };
 
   return (
-    <LinearGradient
-      colors={dragonGradients.fire}
-      style={globalStyles.container}
-    >
+    <SafeAreaView style={{ flex: 1 }}>
+      <LinearGradient
+        colors={dragonGradients.fire}
+        style={globalStyles.container}
+      >
       <View style={globalStyles.centered}>
         <View style={styles.titleContainer}>
           <Text style={styles.gameTitle}>🐉 SMOKI 🐉</Text>
@@ -96,6 +98,7 @@ const MainMenuScreen = ({ navigation }) => {
         </View>
       </View>
     </LinearGradient>
+    </SafeAreaView>
   );
 };
 

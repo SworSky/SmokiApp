@@ -9,6 +9,7 @@ import {
   Modal 
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { globalStyles, colors, dragonGradients } from '../styles/globalStyles';
 import { 
   getAllPlayers, 
@@ -140,10 +141,11 @@ const PlayersScreen = ({ navigation }) => {
   );
 
   return (
-    <LinearGradient
-      colors={dragonGradients.purple}
-      style={globalStyles.container}
-    >
+    <SafeAreaView style={{ flex: 1 }}>
+      <LinearGradient
+        colors={dragonGradients.purple}
+        style={globalStyles.container}
+      >
       <View style={[globalStyles.padding, globalStyles.flex1]}>
         <View style={styles.header}>
           <TouchableOpacity 
@@ -225,6 +227,7 @@ const PlayersScreen = ({ navigation }) => {
         </Modal>
       </View>
     </LinearGradient>
+    </SafeAreaView>
   );
 };
 

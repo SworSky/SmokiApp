@@ -9,6 +9,7 @@ import {
   ScrollView 
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { globalStyles, colors, dragonGradients } from '../styles/globalStyles';
 import { 
   saveGameState, 
@@ -98,7 +99,7 @@ const GameScreen = ({ navigation, route }) => {
   const handleAddPoints = async () => {
     const points = parseInt(roundPoints);
     
-    if (isNaN(points) || points < 0) {
+    if (isNaN(points)) {
       Alert.alert('Błąd', 'Wprowadź prawidłową liczbę punktów');
       return;
     }
@@ -176,31 +177,6 @@ const GameScreen = ({ navigation, route }) => {
       await clearGameState();
       
       setGameState('ended');
-      
-      // Show results
-      Alert.alert(
-        'Koniec Gry! 🎉',
-        `Zwycięzca: ${winners[0].name} (${winners[0].totalPoints} pkt)\n\n` +
-        winners.map((player, index) => 
-          `${index + 1}. ${player.name} - ${player.totalPoints} pkt`
-        ).join('\n'),
-        [
-          {
-            text: 'Nowa Gra',
-            onPress: () => navigation.reset({
-              index: 0,
-              routes: [{ name: 'MainMenu' }],
-            })
-          },
-          {
-            text: 'Menu Główne',
-            onPress: () => navigation.reset({
-              index: 0,
-              routes: [{ name: 'MainMenu' }],
-            })
-          }
-        ]
-      );
     } catch (error) {
       console.error('Error ending game:', error);
       Alert.alert('Błąd', 'Nie udało się zakończyć gry');
@@ -294,31 +270,54 @@ const GameScreen = ({ navigation, route }) => {
 
   if (gameState === 'ended') {
     return (
-      <LinearGradient
-        colors={dragonGradients.gold}
-        style={globalStyles.container}
-      >
-        <View style={[globalStyles.padding, globalStyles.centered]}>
-          <Text style={styles.endGameTitle}>🎉 Koniec Gry! 🎉</Text>
-          <View style={styles.finalResults}>
-            {getGameWinners(players).map((player, index) => (
-              <Text key={player.id} style={styles.finalResultText}>
-                {index + 1}. {player.name} - {player.totalPoints} pkt
-              </Text>
-            ))}
+      <SafeAreaView style={{ flex: 1 }}>
+        <LinearGradient
+          colors={dragonGradients.gold}
+          style={globalStyles.container}
+        >
+          <View style={[globalStyles.padding, globalStyles.centered]}>
+            <Text style={styles.endGameTitle}>🎉 Koniec Gry! 🎉</Text>
+            <View style={styles.finalResults}>
+              {getGameWinners(players).map((player, index) => (
+                <Text key={player.id} style={styles.finalResultText}>
+                  {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`} {player.name} - {player.totalPoints} pkt
+                </Text>
+              ))}
+            </View>
+            <View style={styles.endGameButtons}>
+              <TouchableOpacity 
+                style={[globalStyles.button, styles.endGameButton]}
+                onPress={() => navigation.reset({
+                  index: 0,
+                  routes: [{ name: 'PlayerSelection' }],
+                })}
+              >
+                <Text style={globalStyles.buttonText}>🎮 Nowa Gra</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[globalStyles.outlineButton, styles.endGameButton]}
+                onPress={() => navigation.reset({
+                  index: 0,
+                  routes: [{ name: 'MainMenu' }],
+                })}
+              >
+                <Text style={globalStyles.outlineButtonText}>🏠 Menu Główne</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </LinearGradient>
+        </LinearGradient>
+      </SafeAreaView>
     );
   }
 
   return (
-    <LinearGradient
-      colors={dragonGradients.green}
-      style={globalStyles.container}
-    >
-      <ScrollView style={globalStyles.flex1}>
-        <View style={globalStyles.padding}>
+    <SafeAreaView style={{ flex: 1 }}>
+      <LinearGradient
+        colors={dragonGradients.green}
+        style={globalStyles.container}
+      >
+        <View style={[globalStyles.padding, { flex: 1 }]}>
           <View style={styles.header}>
             <TouchableOpacity 
               style={styles.backButton}
@@ -338,27 +337,30 @@ const GameScreen = ({ navigation, route }) => {
             <Text style={globalStyles.title}>Runda {currentRound}</Text>
           </View>
 
-          <FlatList
-            data={players}
-            renderItem={renderPlayer}
-            keyExtractor={(item) => item.id.toString()}
-            scrollEnabled={false}
-            contentContainerStyle={styles.playersList}
-          />
+          <View style={styles.playersContainer}>
+            <FlatList
+              data={players}
+              renderItem={renderPlayer}
+              keyExtractor={(item) => item.id.toString()}
+              contentContainerStyle={styles.playersList}
+              showsVerticalScrollIndicator={false}
+            />
+          </View>
+        </View>
 
-          {gameState === 'playing' && (
-            <View style={styles.inputContainer}>
+        {gameState === 'playing' && (
+          <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>
                 Punkty dla: {players[currentPlayerIndex]?.name}
               </Text>
               
               <TextInput
                 style={[globalStyles.textInput, styles.pointsInput]}
-                placeholder="Wprowadź punkty"
+                placeholder="Wprowadź punkty (może być ujemne)"
                 value={roundPoints}
                 onChangeText={setRoundPoints}
-                keyboardType="numeric"
-                maxLength={3}
+                keyboardType="numbers-and-punctuation"
+                maxLength={4}
               />
               
               <View style={styles.gameControls}>
@@ -382,10 +384,9 @@ const GameScreen = ({ navigation, route }) => {
                 </TouchableOpacity>
               </View>
             </View>
-          )}
-        </View>
-      </ScrollView>
-    </LinearGradient>
+        )}
+      </LinearGradient>
+    </SafeAreaView>
   );
 };
 
@@ -407,8 +408,12 @@ const styles = {
     fontSize: 16,
     fontWeight: 'bold',
   },
+  playersContainer: {
+    flex: 1,
+    marginBottom: 160, // Leave space for the input container
+  },
   playersList: {
-    marginBottom: 20,
+    paddingBottom: 10,
   },
   playerCard: {
     flexDirection: 'row',
@@ -469,8 +474,11 @@ const styles = {
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderRadius: 20,
     padding: 20,
-    marginTop: 20,
     ...globalStyles.shadow,
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
   },
   inputLabel: {
     fontSize: 18,
@@ -504,6 +512,7 @@ const styles = {
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 20,
     padding: 30,
+    marginBottom: 30,
   },
   finalResultText: {
     fontSize: 20,
@@ -511,6 +520,12 @@ const styles = {
     color: colors.text,
     textAlign: 'center',
     marginVertical: 5,
+  },
+  endGameButtons: {
+    width: '100%',
+  },
+  endGameButton: {
+    marginVertical: 10,
   },
 };
 
