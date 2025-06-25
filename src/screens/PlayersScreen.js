@@ -153,8 +153,7 @@ const PlayersScreen = ({ navigation }) => {
             onPress={() => navigation.goBack()}
           >
             <Text style={styles.backButtonText}>← Powrót</Text>
-          </TouchableOpacity>
-          <Text style={globalStyles.title}>👥 Gracze</Text>
+          </TouchableOpacity>            <Text style={globalStyles.title}>Gracze</Text>
         </View>
 
         <TouchableOpacity 
@@ -370,6 +369,7 @@ const styles = {
     paddingVertical: 12,
     paddingHorizontal: 20,
     alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 2,
     borderColor: colors.primary,
   },
@@ -377,6 +377,7 @@ const styles = {
     color: colors.primary,
     fontSize: 14,
     fontWeight: 'bold',
+    textAlign: 'center',
   },
   saveButton: {
     paddingVertical: 12,

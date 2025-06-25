@@ -22,12 +22,14 @@ export default function App() {
           initialRouteName="MainMenu"
           screenOptions={{
             headerShown: false,
-            gestureEnabled: false,
+            gestureEnabled: true,
+            gestureDirection: 'horizontal',
           }}
         >
         <Stack.Screen 
           name="MainMenu" 
-          component={MainMenuScreen} 
+          component={MainMenuScreen}
+          options={{ gestureEnabled: false }}
         />
         <Stack.Screen 
           name="Players" 

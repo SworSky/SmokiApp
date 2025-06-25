@@ -19,7 +19,7 @@ const MainMenuScreen = ({ navigation }) => {
       const activeGame = await getActiveGame();
       const gameState = await loadGameState();
       
-      if (activeGame && gameState) {
+      if (activeGame && gameState && gameState.gameState !== 'ended') {
         Alert.alert(
           'Kontynuować grę?',
           'Znaleziono zapisaną grę. Czy chcesz ją kontynuować?',

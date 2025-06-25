@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { 
   View, 
   Text, 
-  FlatList, 
+  FlatList,
   TouchableOpacity, 
-  Alert 
+  Alert,
+  ActionSheetIOS,
+  Platform
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,6 +20,49 @@ const PlayerOrderScreen = ({ navigation, route }) => {
   const shufflePlayers = () => {
     const shuffled = shuffleArray(orderedPlayers);
     setOrderedPlayers(shuffled);
+  };
+
+  const showReorderOptions = (playerIndex) => {
+    const player = orderedPlayers[playerIndex];
+    const options = ['Anuluj'];
+    const actions = [];
+
+    if (playerIndex > 0) {
+      options.unshift('Przesuń w górę');
+      actions.unshift(() => movePlayerUp(playerIndex));
+    }
+    if (playerIndex < orderedPlayers.length - 1) {
+      options.unshift('Przesuń w dół');
+      actions.unshift(() => movePlayerDown(playerIndex));
+    }
+
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: options,
+          cancelButtonIndex: options.length - 1,
+          title: `Zmień pozycję: ${player.name}`,
+        },
+        (buttonIndex) => {
+          if (buttonIndex < actions.length) {
+            actions[buttonIndex]();
+          }
+        }
+      );
+    } else {
+      // For Android, show alert with options
+      Alert.alert(
+        `Zmień pozycję: ${player.name}`,
+        'Wybierz akcję:',
+        [
+          ...actions.map((action, index) => ({
+            text: options[index],
+            onPress: action
+          })),
+          { text: 'Anuluj', style: 'cancel' }
+        ]
+      );
+    }
   };
 
   const movePlayerUp = (index) => {
@@ -55,39 +100,30 @@ const PlayerOrderScreen = ({ navigation, route }) => {
   };
 
   const renderPlayer = ({ item, index }) => (
-    <LinearGradient
-      colors={dragonGradients.purple}
-      style={styles.playerCard}
+    <TouchableOpacity
+      onLongPress={() => showReorderOptions(index)}
+      activeOpacity={0.8}
     >
-      <View style={styles.playerOrder}>
-        <Text style={styles.orderNumber}>{index + 1}</Text>
-      </View>
-      
-      <View style={styles.playerInfo}>
-        <Text style={styles.playerName}>🐉 {item.name}</Text>
-        <Text style={styles.playerStats}>
-          🎮 {item.totalGames} gier | 🥇 {item.firstPlace}
-        </Text>
-      </View>
-      
-      <View style={styles.playerControls}>
-        <TouchableOpacity 
-          style={[styles.controlButton, index === 0 && styles.disabledButton]}
-          onPress={() => movePlayerUp(index)}
-          disabled={index === 0}
-        >
-          <Text style={styles.controlButtonText}>⬆️</Text>
-        </TouchableOpacity>
+      <LinearGradient
+        colors={dragonGradients.purple}
+        style={styles.playerCard}
+      >
+        <View style={styles.playerOrder}>
+          <Text style={styles.orderNumber}>{index + 1}</Text>
+        </View>
         
-        <TouchableOpacity 
-          style={[styles.controlButton, index === orderedPlayers.length - 1 && styles.disabledButton]}
-          onPress={() => movePlayerDown(index)}
-          disabled={index === orderedPlayers.length - 1}
-        >
-          <Text style={styles.controlButtonText}>⬇️</Text>
-        </TouchableOpacity>
-      </View>
-    </LinearGradient>
+        <View style={styles.playerInfo}>
+          <Text style={styles.playerName}>🐉 {item.name}</Text>
+          <Text style={styles.playerStats}>
+            🎮 {item.totalGames} gier | 🥇 {item.firstPlace}
+          </Text>
+        </View>
+        
+        <View style={styles.dragHandle}>
+          <Text style={styles.dragHandleText}>⋮⋮</Text>
+        </View>
+      </LinearGradient>
+    </TouchableOpacity>
   );
 
   return (
@@ -108,7 +144,7 @@ const PlayerOrderScreen = ({ navigation, route }) => {
 
         <View style={styles.infoContainer}>
           <Text style={styles.infoText}>
-            Użyj strzałek aby zmienić kolejność
+            Przytrzymaj gracza aby zmienić kolejność
           </Text>
         </View>
 
@@ -232,23 +268,16 @@ const styles = {
     color: colors.surface,
     opacity: 0.8,
   },
-  playerControls: {
-    flexDirection: 'column',
+  dragHandle: {
+    padding: 10,
   },
-  controlButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: 15,
-    padding: 8,
-    marginVertical: 2,
-    minWidth: 40,
-    alignItems: 'center',
+  dragHandleText: {
+    fontSize: 18,
+    color: colors.surface,
+    fontWeight: 'bold',
   },
-  disabledButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    opacity: 0.5,
-  },
-  controlButtonText: {
-    fontSize: 16,
+  playersList: {
+    marginBottom: 20,
   },
   startButton: {
     position: 'absolute',
