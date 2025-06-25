@@ -2,82 +2,62 @@ import React, { useState } from 'react';
 import { 
   View, 
   Text, 
-  FlatList,
   TouchableOpacity, 
   Alert,
-  ActionSheetIOS,
-  Platform
+  Animated,
+  Dimensions
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { PanGestureHandler, State } from 'react-native-gesture-handler';
+import * as Haptics from 'expo-haptics';
 import { globalStyles, colors, dragonGradients } from '../styles/globalStyles';
 import { shuffleArray } from '../services/gameService';
 
 const PlayerOrderScreen = ({ navigation, route }) => {
   const { selectedPlayers } = route.params;
   const [orderedPlayers, setOrderedPlayers] = useState([...selectedPlayers]);
+  const [draggedIndex, setDraggedIndex] = useState(null);
+  const [dragY] = useState(new Animated.Value(0));
+
+  const ITEM_HEIGHT = 88;
 
   const shufflePlayers = () => {
     const shuffled = shuffleArray(orderedPlayers);
     setOrderedPlayers(shuffled);
   };
 
-  const showReorderOptions = (playerIndex) => {
-    const player = orderedPlayers[playerIndex];
-    const options = ['Anuluj'];
-    const actions = [];
+  const onGestureEvent = Animated.event(
+    [{ nativeEvent: { translationY: dragY } }],
+    { useNativeDriver: false }
+  );
 
-    if (playerIndex > 0) {
-      options.unshift('Przesuń w górę');
-      actions.unshift(() => movePlayerUp(playerIndex));
-    }
-    if (playerIndex < orderedPlayers.length - 1) {
-      options.unshift('Przesuń w dół');
-      actions.unshift(() => movePlayerDown(playerIndex));
-    }
-
-    if (Platform.OS === 'ios') {
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          options: options,
-          cancelButtonIndex: options.length - 1,
-          title: `Zmień pozycję: ${player.name}`,
-        },
-        (buttonIndex) => {
-          if (buttonIndex < actions.length) {
-            actions[buttonIndex]();
-          }
+  const onHandlerStateChange = (event, index) => {
+    if (event.nativeEvent.state === State.BEGAN) {
+      setDraggedIndex(index);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } else if (event.nativeEvent.state === State.END || event.nativeEvent.state === State.CANCELLED) {
+      if (draggedIndex !== null) {
+        const { translationY } = event.nativeEvent;
+        const newIndex = Math.round(index + translationY / ITEM_HEIGHT);
+        const clampedIndex = Math.max(0, Math.min(orderedPlayers.length - 1, newIndex));
+        
+        if (clampedIndex !== index) {
+          const newOrder = [...orderedPlayers];
+          const draggedItem = newOrder.splice(index, 1)[0];
+          newOrder.splice(clampedIndex, 0, draggedItem);
+          setOrderedPlayers(newOrder);
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         }
-      );
-    } else {
-      // For Android, show alert with options
-      Alert.alert(
-        `Zmień pozycję: ${player.name}`,
-        'Wybierz akcję:',
-        [
-          ...actions.map((action, index) => ({
-            text: options[index],
-            onPress: action
-          })),
-          { text: 'Anuluj', style: 'cancel' }
-        ]
-      );
-    }
-  };
-
-  const movePlayerUp = (index) => {
-    if (index > 0) {
-      const newOrder = [...orderedPlayers];
-      [newOrder[index], newOrder[index - 1]] = [newOrder[index - 1], newOrder[index]];
-      setOrderedPlayers(newOrder);
-    }
-  };
-
-  const movePlayerDown = (index) => {
-    if (index < orderedPlayers.length - 1) {
-      const newOrder = [...orderedPlayers];
-      [newOrder[index], newOrder[index + 1]] = [newOrder[index + 1], newOrder[index]];
-      setOrderedPlayers(newOrder);
+      }
+      
+      setDraggedIndex(null);
+      Animated.spring(dragY, {
+        toValue: 0,
+        useNativeDriver: false,
+        tension: 150,
+        friction: 8
+      }).start();
     }
   };
 
@@ -99,32 +79,50 @@ const PlayerOrderScreen = ({ navigation, route }) => {
     navigation.navigate('Game', { gameData });
   };
 
-  const renderPlayer = ({ item, index }) => (
-    <TouchableOpacity
-      onLongPress={() => showReorderOptions(index)}
-      activeOpacity={0.8}
-    >
-      <LinearGradient
-        colors={dragonGradients.purple}
-        style={styles.playerCard}
+  const renderPlayer = (item, index) => {
+    const isDragging = draggedIndex === index;
+    
+    return (
+      <PanGestureHandler
+        key={`${item.id}-${index}`}
+        onGestureEvent={isDragging ? onGestureEvent : undefined}
+        onHandlerStateChange={(event) => onHandlerStateChange(event, index)}
+        activeOffsetY={[-5, 5]}
+        failOffsetX={[-50, 50]}
       >
-        <View style={styles.playerOrder}>
-          <Text style={styles.orderNumber}>{index + 1}</Text>
-        </View>
-        
-        <View style={styles.playerInfo}>
-          <Text style={styles.playerName}>🐉 {item.name}</Text>
-          <Text style={styles.playerStats}>
-            🎮 {item.totalGames} gier | 🥇 {item.firstPlace}
-          </Text>
-        </View>
-        
-        <View style={styles.dragHandle}>
-          <Text style={styles.dragHandleText}>⋮⋮</Text>
-        </View>
-      </LinearGradient>
-    </TouchableOpacity>
-  );
+        <Animated.View
+          style={[
+            styles.playerCardContainer,
+            isDragging && {
+              transform: [{ translateY: dragY }],
+              zIndex: 1000,
+              elevation: 5,
+            }
+          ]}
+        >
+          <LinearGradient
+            colors={isDragging ? dragonGradients.fire : dragonGradients.purple}
+            style={[styles.playerCard, isDragging && styles.draggedCard]}
+          >
+            <View style={styles.playerOrder}>
+              <Text style={styles.orderNumber}>{index + 1}</Text>
+            </View>
+            
+            <View style={styles.playerInfo}>
+              <Text style={styles.playerName}>🐉 {item.name}</Text>
+              <Text style={styles.playerStats}>
+                🎮 {item.totalGames} gier | 🥇 {item.firstPlace}
+              </Text>
+            </View>
+            
+            <View style={styles.dragHandle}>
+              <Text style={styles.dragHandleText}>⋮⋮</Text>
+            </View>
+          </LinearGradient>
+        </Animated.View>
+      </PanGestureHandler>
+    );
+  };
 
   return (
     <SafeAreaView style={{ flex: 1 }} edges={['left', 'right']}>
@@ -144,7 +142,7 @@ const PlayerOrderScreen = ({ navigation, route }) => {
 
         <View style={styles.infoContainer}>
           <Text style={styles.infoText}>
-            Przytrzymaj gracza aby zmienić kolejność
+            Przytrzymaj i przeciągnij gracza aby zmienić kolejność
           </Text>
         </View>
 
@@ -160,13 +158,9 @@ const PlayerOrderScreen = ({ navigation, route }) => {
           </LinearGradient>
         </TouchableOpacity>
 
-        <FlatList
-          data={orderedPlayers}
-          renderItem={renderPlayer}
-          keyExtractor={(item, index) => `${item.id}-${index}`}
-          contentContainerStyle={styles.playersList}
-          showsVerticalScrollIndicator={false}
-        />
+        <View style={styles.playersContainer}>
+          {orderedPlayers.map((item, index) => renderPlayer(item, index))}
+        </View>
 
         <TouchableOpacity 
           style={[globalStyles.button, styles.startButton]}
@@ -232,13 +226,29 @@ const styles = {
   playersList: {
     paddingBottom: 100,
   },
+  playerCardContainer: {
+    marginVertical: 4,
+  },
   playerCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 8,
     borderRadius: 15,
     padding: 15,
     ...globalStyles.shadow,
+    minHeight: 80,
+  },
+  draggedCard: {
+    transform: [{ scale: 1.08 }],
+    opacity: 0.95,
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 10,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+  },
+  playersContainer: {
+    flex: 1,
+    paddingHorizontal: 20,
   },
   playerOrder: {
     width: 40,
@@ -275,9 +285,6 @@ const styles = {
     fontSize: 18,
     color: colors.surface,
     fontWeight: 'bold',
-  },
-  playersList: {
-    marginBottom: 20,
   },
   startButton: {
     position: 'absolute',
