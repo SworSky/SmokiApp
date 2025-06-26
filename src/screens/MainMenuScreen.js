@@ -6,6 +6,26 @@ import { globalStyles, colors, dragonGradients } from '../styles/globalStyles';
 import { initDatabase, getActiveGame } from '../services/database';
 import { loadGameState } from '../services/gameService';
 
+const RainbowText = ({ text }) => {
+  const rainbowColors = ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0000FF', '#4B0082', '#9400D3'];
+  
+  return (
+    <View style={{ flexDirection: 'row' }}>
+      {text.split('').map((letter, index) => (
+        <Text
+          key={index}
+          style={[
+            styles.subtitle,
+            { color: rainbowColors[index % rainbowColors.length] }
+          ]}
+        >
+          {letter}
+        </Text>
+      ))}
+    </View>
+  );
+};
+
 const MainMenuScreen = ({ navigation }) => {
   const [hasActiveGame, setHasActiveGame] = useState(false);
   const [activeGameData, setActiveGameData] = useState(null);
@@ -90,7 +110,7 @@ const MainMenuScreen = ({ navigation }) => {
       <View style={globalStyles.centered}>
         <View style={styles.titleContainer}>
           <Text style={styles.gameTitle}>🐉 SMOKI 🐉</Text>
-          <Text style={styles.subtitle}>by Maślak</Text>
+          <RainbowText text="by Maślak" />
         </View>
 
         <View style={styles.menuContainer}>
