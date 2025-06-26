@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ImageBackground, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,39 +7,56 @@ import { initDatabase, getActiveGame } from '../services/database';
 import { loadGameState } from '../services/gameService';
 
 const MainMenuScreen = ({ navigation }) => {
+  const [hasActiveGame, setHasActiveGame] = useState(false);
+  const [activeGameData, setActiveGameData] = useState(null);
+
   useEffect(() => {
     initializeApp();
   }, []);
 
-  const initializeApp = async () => {
+  useEffect(() => {
+    // Check for active game every time screen comes into focus
+    const unsubscribe = navigation.addListener('focus', () => {
+      checkForActiveGame();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
+  const checkForActiveGame = async () => {
     try {
-      await initDatabase();
-      
-      // Check for active game
       const activeGame = await getActiveGame();
       const gameState = await loadGameState();
       
       if (activeGame && gameState && gameState.gameState !== 'ended') {
-        Alert.alert(
-          'Kontynuować grę?',
-          'Znaleziono zapisaną grę. Czy chcesz ją kontynuować?',
-          [
-            {
-              text: 'Nie',
-              style: 'cancel',
-            },
-            {
-              text: 'Tak',
-              onPress: () => navigation.navigate('Game', { 
-                resumeGame: true, 
-                gameData: { activeGame, gameState } 
-              }),
-            },
-          ]
-        );
+        setHasActiveGame(true);
+        setActiveGameData({ activeGame, gameState });
+      } else {
+        setHasActiveGame(false);
+        setActiveGameData(null);
       }
     } catch (error) {
+      console.error('Error checking for active game:', error);
+      setHasActiveGame(false);
+      setActiveGameData(null);
+    }
+  };
+
+  const initializeApp = async () => {
+    try {
+      await initDatabase();
+      await checkForActiveGame();
+    } catch (error) {
       console.error('Error initializing app:', error);
+    }
+  };
+
+  const handleContinueGame = () => {
+    if (activeGameData) {
+      navigation.navigate('Game', { 
+        resumeGame: true, 
+        gameData: activeGameData 
+      });
     }
   };
 
@@ -64,6 +81,22 @@ const MainMenuScreen = ({ navigation }) => {
         </View>
 
         <View style={styles.menuContainer}>
+          {hasActiveGame && (
+            <TouchableOpacity 
+              style={[globalStyles.button, styles.menuButton, styles.continueButton]}
+              onPress={handleContinueGame}
+            >
+              <LinearGradient
+                colors={dragonGradients.fire}
+                style={styles.buttonGradient}
+              >
+                <Text style={[globalStyles.buttonText, styles.buttonText]}>
+                  ▶️ Kontynuuj Grę
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          )}
+
           <TouchableOpacity 
             style={[globalStyles.button, styles.menuButton]}
             onPress={handleNewGame}
@@ -136,6 +169,11 @@ const styles = {
     borderRadius: 30,
     overflow: 'hidden',
     backgroundColor: 'transparent',
+  },
+  continueButton: {
+    marginBottom: 25,
+    transform: [{ scale: 1.05 }],
+    ...globalStyles.shadow,
   },
   buttonGradient: {
     paddingVertical: 20,

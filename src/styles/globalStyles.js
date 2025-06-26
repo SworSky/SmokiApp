@@ -33,7 +33,7 @@ export const globalStyles = StyleSheet.create({
   },
   padding: {
     padding: 20,
-    paddingTop: 40, // Extra top padding for status bar area
+    paddingTop: 80, // Extra top padding for status bar area and notch
   },
   margin: {
     margin: 10,

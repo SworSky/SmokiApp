@@ -172,12 +172,6 @@ const PlayerOrderScreen = ({ navigation, route }) => {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.infoContainer}>
-          <Text style={styles.infoText}>
-            Przytrzymaj i przeciągnij gracza aby zmienić kolejność
-          </Text>
-        </View>
-
         <TouchableOpacity 
           style={[globalStyles.button, styles.shuffleButton]}
           onPress={shufflePlayers}
@@ -220,11 +214,12 @@ const styles = {
   },
   backButton: {
     position: 'absolute',
-    left: 0,
+    left: 10,
     top: 10,
     padding: 10,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 20,
+    zIndex: 1000,
   },
   backButtonText: {
     color: colors.primary,

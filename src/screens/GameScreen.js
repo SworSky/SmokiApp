@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -6,7 +6,10 @@ import {
   TouchableOpacity, 
   TextInput, 
   Alert,
-  ScrollView 
+  ScrollView,
+  PanResponder,
+  Animated,
+  Dimensions
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -37,6 +40,49 @@ const GameScreen = ({ navigation, route }) => {
   const [gameId, setGameId] = useState(null);
   const [roundHistory, setRoundHistory] = useState([]);
   const [gameState, setGameState] = useState('playing'); // playing, ended
+  const [isKeypadMinimized, setIsKeypadMinimized] = useState(false);
+  const slideAnim = useRef(new Animated.Value(0)).current;
+
+  // Pan responder for swipe down gesture
+  const panResponder = PanResponder.create({
+    onMoveShouldSetPanResponder: (evt, gestureState) => {
+      return Math.abs(gestureState.dy) > Math.abs(gestureState.dx) && gestureState.dy > 0;
+    },
+    onPanResponderMove: (evt, gestureState) => {
+      if (gestureState.dy > 0) {
+        slideAnim.setValue(gestureState.dy);
+      }
+    },
+    onPanResponderRelease: (evt, gestureState) => {
+      if (gestureState.dy > 100 && gestureState.vy > 0.5) {
+        // Animate slide down and hide
+        Animated.timing(slideAnim, {
+          toValue: 400,
+          duration: 300,
+          useNativeDriver: false,
+        }).start(() => {
+          setIsKeypadMinimized(true);
+        });
+      } else {
+        // Snap back to original position
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          useNativeDriver: false,
+        }).start();
+      }
+    },
+  });
+
+  // Function to show keypad with slide up animation from bottom
+  const showKeypad = () => {
+    setIsKeypadMinimized(false);
+    slideAnim.setValue(400); // Start from bottom
+    Animated.timing(slideAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
+  };
 
   useEffect(() => {
     initializeGame();
@@ -145,11 +191,11 @@ const GameScreen = ({ navigation, route }) => {
       [{ label: '4', value: '4' }, { label: '5', value: '5' }, { label: '6', value: '6' }],
       [{ label: '7', value: '7' }, { label: '8', value: '8' }, { label: '9', value: '9' }],
       [{ label: '±', value: '-' }, { label: '0', value: '0' }, { label: '⌫', value: 'backspace' }],
-      [{ label: '🔄 Wyczyść', value: 'clear', span: 1.5 }, { label: '✓ Dodaj Punkty', value: 'enter', span: 2.5 }]
+      [{ label: 'Cofnij', value: 'undo' }, { label: '✓ Dodaj', value: 'enter' }]
     ];
 
     return (
-      <View style={styles.keypadContainer}>
+      <View style={styles.keypadContent}>
         {keypadButtons.map((row, rowIndex) => (
           <View key={rowIndex} style={styles.keypadRow}>
             {row.map((button, buttonIndex) => (
@@ -157,16 +203,20 @@ const GameScreen = ({ navigation, route }) => {
                 key={buttonIndex}
                 style={[
                   styles.keypadButton,
-                  button.span && { flex: button.span },
-                  button.value === 'enter' && styles.keypadButtonEnter,
-                  button.value === 'clear' && styles.keypadButtonClear
+                  (button.value === 'enter' || button.value === 'undo') && styles.keypadButtonWide,
                 ]}
-                onPress={() => handleKeypadPress(button.value)}
+                onPress={() => {
+                  if (button.value === 'undo') {
+                    handlePreviousPlayer();
+                  } else {
+                    handleKeypadPress(button.value);
+                  }
+                }}
               >
                 <LinearGradient
                   colors={
                     button.value === 'enter' ? dragonGradients.fire :
-                    button.value === 'clear' ? dragonGradients.purple :
+                    button.value === 'undo' ? dragonGradients.purple :
                     button.value === '-' ? dragonGradients.gold :
                     dragonGradients.ocean
                   }
@@ -174,7 +224,7 @@ const GameScreen = ({ navigation, route }) => {
                 >
                   <Text style={[
                     styles.keypadButtonText,
-                    (button.value === 'enter' || button.value === 'clear') && styles.keypadButtonTextSmall
+                    (button.value === 'undo' || button.value === 'enter') && styles.keypadButtonTextSmall
                   ]}>
                     {button.label}
                   </Text>
@@ -422,21 +472,6 @@ const GameScreen = ({ navigation, route }) => {
       >
         <View style={[globalStyles.padding, { flex: 1 }]}>
           <View style={styles.header}>
-            <TouchableOpacity 
-              style={styles.backButton}
-              onPress={() => {
-                Alert.alert(
-                  'Opuścić grę?',
-                  'Gra zostanie zapisana automatycznie',
-                  [
-                    { text: 'Anuluj', style: 'cancel' },
-                    { text: 'Opuść', onPress: () => navigation.goBack() }
-                  ]
-                );
-              }}
-            >
-              <Text style={styles.backButtonText}>← Menu</Text>
-            </TouchableOpacity>
             <Text style={globalStyles.title}>Runda {currentRound}</Text>
           </View>
 
@@ -445,16 +480,32 @@ const GameScreen = ({ navigation, route }) => {
               data={players}
               renderItem={renderPlayer}
               keyExtractor={(item) => item.id.toString()}
-              contentContainerStyle={styles.playersList}
+              contentContainerStyle={[
+                styles.playersList,
+                isKeypadMinimized && styles.playersListExpanded
+              ]}
               showsVerticalScrollIndicator={false}
             />
           </View>
         </View>
           
-          {gameState === 'playing' && (
-            <View style={styles.inputContainer}>
+          {gameState === 'playing' && !isKeypadMinimized && (
+            <Animated.View 
+              style={[
+                styles.inputContainer,
+                {
+                  transform: [{ translateY: slideAnim }]
+                }
+              ]}
+              {...panResponder.panHandlers}
+            >
+              {/* Swipe indicator at the very top */}
+              <View style={styles.swipeIndicator}>
+                <View style={styles.swipeHandle} />
+              </View>
+              
               <Text style={styles.inputLabel}>
-                Punkty dla: {players[currentPlayerIndex]?.name}
+                Punkty dla: {players[currentPlayerIndex]?.name} • Swipe down to minimize
               </Text>
               
               <View style={styles.displayContainer}>
@@ -463,19 +514,39 @@ const GameScreen = ({ navigation, route }) => {
               
               <ScrollView showsVerticalScrollIndicator={false}>
                 {renderCustomKeypad()}
-                
-                <TouchableOpacity 
-                  style={[globalStyles.outlineButton, styles.backButton]}
-                  onPress={handlePreviousPlayer}
-                  disabled={currentPlayerIndex === 0 && currentRound === 1}
-                >
-                  <Text style={globalStyles.outlineButtonText}>
-                    ← Cofnij
-                  </Text>
-                </TouchableOpacity>
               </ScrollView>
-            </View>
+            </Animated.View>
           )}
+
+          {gameState === 'playing' && isKeypadMinimized && (
+            <TouchableOpacity 
+              style={styles.floatingAddButton}
+              onPress={showKeypad}
+            >
+              <LinearGradient
+                colors={dragonGradients.fire}
+                style={styles.floatingButtonGradient}
+              >
+                <Text style={styles.floatingButtonText}>+</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity 
+            style={styles.topBackButton}
+            onPress={() => {
+              Alert.alert(
+                'Opuścić grę?',
+                'Gra zostanie zapisana automatycznie',
+                [
+                  { text: 'Anuluj', style: 'cancel' },
+                  { text: 'Opuść', onPress: () => navigation.goBack() }
+                ]
+              );
+            }}
+          >
+            <Text style={styles.topBackButtonText}>← Powrót</Text>
+          </TouchableOpacity>
       </LinearGradient>
     </SafeAreaView>
   );
@@ -486,25 +557,29 @@ const styles = {
     alignItems: 'center',
     marginBottom: 20,
   },
-  backButton: {
+  topBackButton: {
     position: 'absolute',
-    left: 0,
-    top: 10,
+    left: 10,
+    top: 50,
     padding: 10,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 20,
+    zIndex: 1000,
   },
-  backButtonText: {
+  topBackButtonText: {
     color: colors.primary,
     fontSize: 16,
     fontWeight: 'bold',
   },
   playersContainer: {
     flex: 1,
-    marginBottom: 160, // Leave space for the input container
+    marginBottom: 120, // Leave space for the input container
   },
   playersList: {
     paddingBottom: 10,
+  },
+  playersListExpanded: {
+    paddingBottom: 120, // More space when keypad is minimized to account for floating button
   },
   playerCard: {
     flexDirection: 'row',
@@ -564,73 +639,113 @@ const styles = {
   inputContainer: {
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderRadius: 20,
-    padding: 20,
+    padding: 15,
     ...globalStyles.shadow,
     position: 'absolute',
-    bottom: 20,
-    left: 20,
-    right: 20,
-    maxHeight: '75%',
+    bottom: 10,
+    left: 10,
+    right: 10,
+    maxHeight: '60%',
   },
   displayContainer: {
     backgroundColor: 'rgba(0, 0, 0, 0.1)',
     borderRadius: 15,
-    padding: 20,
-    marginBottom: 20,
+    padding: 15,
+    marginBottom: 15,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 70,
+    minHeight: 55,
     borderWidth: 2,
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   displayText: {
-    fontSize: 36,
+    fontSize: 28,
     fontWeight: 'bold',
     color: colors.primary,
     textAlign: 'center',
-    minWidth: 100,
+    minWidth: 80,
   },
-  keypadContainer: {
-    marginBottom: 15,
+  swipeIndicator: {
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingTop: 12,
+    width: '100%',
+  },
+  swipeHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    borderRadius: 2,
+  },
+  keypadContent: {
+    // Container for just the keypad buttons
   },
   keypadRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 8,
   },
   keypadButton: {
     flex: 1,
-    marginHorizontal: 3,
-    borderRadius: 12,
+    marginHorizontal: 2,
+    borderRadius: 10,
     overflow: 'hidden',
     ...globalStyles.shadow,
   },
+  keypadButtonWide: {
+    flex: 1,
+  },
+  keypadButtonWide: {
+    flex: 2,
+  },
   keypadButtonGradient: {
-    paddingVertical: 15,
+    paddingVertical: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 12,
-    minHeight: 50,
+    borderRadius: 10,
+    minHeight: 40,
   },
   keypadButtonText: {
     color: colors.surface,
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: 'bold',
   },
   keypadButtonTextSmall: {
-    fontSize: 14,
+    fontSize: 12,
   },
   backButton: {
     alignSelf: 'center',
     minWidth: 120,
-    marginTop: 15,
+    marginTop: 10,
+  },
+  floatingAddButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    overflow: 'hidden',
+    ...globalStyles.shadow,
+    elevation: 8,
+  },
+  floatingButtonGradient: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  floatingButtonText: {
+    color: colors.surface,
+    fontSize: 24,
+    fontWeight: 'bold',
   },
   inputLabel: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
-    color: colors.text,
+    color: colors.primary,
     textAlign: 'center',
-    marginBottom: 15,
+    marginBottom: 10,
   },
   endGameTitle: {
     fontSize: 32,

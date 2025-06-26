@@ -22,7 +22,9 @@ const PlayerSelectionScreen = ({ navigation }) => {
   const loadPlayers = async () => {
     try {
       const playersData = await getAllPlayers();
-      setPlayers(playersData);
+      // Sort players alphabetically by name
+      const sortedPlayers = playersData.sort((a, b) => a.name.localeCompare(b.name));
+      setPlayers(sortedPlayers);
     } catch (error) {
       console.error('Error loading players:', error);
       Alert.alert('Błąd', 'Nie udało się załadować graczy');
@@ -58,20 +60,38 @@ const PlayerSelectionScreen = ({ navigation }) => {
     return (
       <TouchableOpacity 
         onPress={() => togglePlayerSelection(item)}
+        style={styles.playerCardContainer}
       >
         <LinearGradient
           colors={isSelected ? dragonGradients.gold : dragonGradients.ocean}
           style={[styles.playerCard, isSelected && styles.selectedCard]}
         >
-          <View style={styles.playerContent}>
+          <View style={styles.playerHeader}>
             <Text style={styles.playerEmoji}>
               {isSelected ? '✅' : '🐉'}
             </Text>
             <Text style={styles.playerName}>{item.name}</Text>
-            <View style={styles.playerStats}>
-              <Text style={styles.statText}>
-                🎮 {item.totalGames} | 🥇 {item.firstPlace}
-              </Text>
+          </View>
+          
+          <View style={styles.playerStatsContainer}>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Gry:</Text>
+              <Text style={styles.statValue}>{item.totalGames || 0}</Text>
+            </View>
+            
+            <View style={styles.statsRow}>
+              <View style={styles.statItem}>
+                <Text style={styles.statIcon}>🥇</Text>
+                <Text style={styles.statNumber}>{item.firstPlace || 0}</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statIcon}>🥈</Text>
+                <Text style={styles.statNumber}>{item.secondPlace || 0}</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statIcon}>🥉</Text>
+                <Text style={styles.statNumber}>{item.thirdPlace || 0}</Text>
+              </View>
             </View>
           </View>
         </LinearGradient>
@@ -125,9 +145,9 @@ const PlayerSelectionScreen = ({ navigation }) => {
               data={players}
               renderItem={renderPlayer}
               keyExtractor={(item) => item.id.toString()}
-              numColumns={2}
-              contentContainerStyle={styles.playersGrid}
+              contentContainerStyle={styles.playersList}
               showsVerticalScrollIndicator={false}
+              style={styles.playersContainer}
             />
 
             {selectedPlayers.length >= 2 && (
@@ -188,44 +208,77 @@ const styles = {
     color: colors.textLight,
     marginTop: 5,
   },
-  playersGrid: {
-    paddingBottom: 100,
+  playersContainer: {
+    flex: 1,
+    marginBottom: 100,
+  },
+  playersList: {
+    paddingBottom: 20,
+  },
+  playerCardContainer: {
+    marginVertical: 6,
   },
   playerCard: {
-    flex: 1,
-    margin: 8,
     borderRadius: 15,
     padding: 15,
-    alignItems: 'center',
-    minHeight: 120,
-    justifyContent: 'center',
+    marginHorizontal: 10,
     ...globalStyles.shadow,
   },
   selectedCard: {
     borderWidth: 3,
     borderColor: colors.dragon.gold,
   },
-  playerContent: {
+  playerHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 10,
   },
   playerEmoji: {
     fontSize: 24,
-    marginBottom: 8,
+    marginRight: 10,
   },
   playerName: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: colors.surface,
-    textAlign: 'center',
-    marginBottom: 5,
+    flex: 1,
   },
-  playerStats: {
+  playerStatsContainer: {
     marginTop: 5,
   },
-  statText: {
-    fontSize: 12,
+  statRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  statLabel: {
+    fontSize: 14,
     color: colors.surface,
-    textAlign: 'center',
+    fontWeight: '500',
+  },
+  statValue: {
+    fontSize: 16,
+    color: colors.surface,
+    fontWeight: 'bold',
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+  statItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  statIcon: {
+    fontSize: 16,
+    marginBottom: 2,
+  },
+  statNumber: {
+    fontSize: 14,
+    color: colors.surface,
+    fontWeight: 'bold',
   },
   continueButton: {
     position: 'absolute',
