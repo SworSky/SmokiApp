@@ -594,7 +594,7 @@ const GameScreen = ({ navigation, route }) => {
         
         <View style={styles.playerInfo}>
           <Text style={styles.playerName}>
-            {`${isCurrentPlayer ? '▶️' : '🐉'} ${item.name || 'Nieznany gracz'}`}
+            {item.name || 'Nieznany gracz'}
           </Text>
           <Text style={styles.playerPoints}>
             {`Punkty: ${item.totalPoints || 0}`}
@@ -715,7 +715,7 @@ const GameScreen = ({ navigation, route }) => {
               </View>
               
               <Text style={styles.inputLabel}>
-                {`Punkty dla: ${players[currentPlayerIndex]?.name || 'Nieznany gracz'} • Swipe down to minimize`}
+                {`Punkty dla: ${players[currentPlayerIndex]?.name || 'Nieznany gracz'}`}
               </Text>
               
               <View style={styles.displayContainer}>
@@ -750,7 +750,10 @@ const GameScreen = ({ navigation, route }) => {
                 'Gra zostanie zapisana automatycznie',
                 [
                   { text: 'Anuluj', style: 'cancel' },
-                  { text: 'Opuść', onPress: () => navigation.goBack() }
+                  { text: 'Opuść', onPress: () => navigation.reset({
+                    index: 0,
+                    routes: [{ name: 'MainMenu' }],
+                  }) }
                 ]
               );
             }}

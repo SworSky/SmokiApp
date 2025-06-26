@@ -68,7 +68,7 @@ const PlayerSelectionScreen = ({ navigation }) => {
         >
           <View style={styles.playerHeader}>
             <Text style={styles.playerEmoji}>
-              {isSelected ? '✅' : '🐉'}
+              {isSelected ? '✅' : ''}
             </Text>
             <View style={styles.playerInfo}>
               <Text style={styles.playerName}>{item.name}</Text>

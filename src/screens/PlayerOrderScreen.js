@@ -133,7 +133,7 @@ const PlayerOrderScreen = ({ navigation, route }) => {
               </View>
               
               <View style={styles.playerInfo}>
-                <Text style={styles.playerName}>🐉 {item.name}</Text>
+                <Text style={styles.playerName}>{item.name}</Text>
                 <Text style={styles.playerStats}>
                   🎮 {item.totalGames} gier | 🥇 {item.firstPlace}
                 </Text>

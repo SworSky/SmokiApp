@@ -103,7 +103,7 @@ const PlayersScreen = ({ navigation }) => {
       style={[globalStyles.card, styles.playerCard]}
     >
       <View style={styles.playerHeader}>
-        <Text style={styles.playerName}>{`🐉 ${item.name}`}</Text>
+        <Text style={styles.playerName}>{item.name}</Text>
         <View style={styles.playerActions}>
           <TouchableOpacity 
             style={styles.actionButton}
