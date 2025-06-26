@@ -28,12 +28,25 @@ const MainMenuScreen = ({ navigation }) => {
       const activeGame = await getActiveGame();
       const gameState = await loadGameState();
       
-      if (activeGame && gameState && gameState.gameState !== 'ended') {
+      console.log('Checking for active game:', { 
+        hasActiveGame: !!activeGame, 
+        hasGameState: !!gameState, 
+        gameStateValue: gameState?.gameState,
+        isCompleted: activeGame?.isCompleted 
+      });
+      
+      // Only show continue button if:
+      // 1. There's an active game in database (not completed)
+      // 2. There's a game state in AsyncStorage 
+      // 3. The game state is 'playing' (not 'ended')
+      if (activeGame && !activeGame.isCompleted && gameState && gameState.gameState === 'playing') {
         setHasActiveGame(true);
         setActiveGameData({ activeGame, gameState });
+        console.log('Active game found - showing continue button');
       } else {
         setHasActiveGame(false);
         setActiveGameData(null);
+        console.log('No active game - hiding continue button');
       }
     } catch (error) {
       console.error('Error checking for active game:', error);

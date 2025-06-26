@@ -239,6 +239,7 @@ const styles = {
     textAlign: 'center',
   },
   shuffleButton: {
+    marginTop: 30,
     marginBottom: 20,
     borderRadius: 25,
     overflow: 'hidden',

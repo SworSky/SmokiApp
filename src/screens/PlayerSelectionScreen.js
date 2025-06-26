@@ -70,28 +70,11 @@ const PlayerSelectionScreen = ({ navigation }) => {
             <Text style={styles.playerEmoji}>
               {isSelected ? '✅' : '🐉'}
             </Text>
-            <Text style={styles.playerName}>{item.name}</Text>
-          </View>
-          
-          <View style={styles.playerStatsContainer}>
-            <View style={styles.statRow}>
-              <Text style={styles.statLabel}>Gry:</Text>
-              <Text style={styles.statValue}>{item.totalGames || 0}</Text>
-            </View>
-            
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
-                <Text style={styles.statIcon}>🥇</Text>
-                <Text style={styles.statNumber}>{item.firstPlace || 0}</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statIcon}>🥈</Text>
-                <Text style={styles.statNumber}>{item.secondPlace || 0}</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statIcon}>🥉</Text>
-                <Text style={styles.statNumber}>{item.thirdPlace || 0}</Text>
-              </View>
+            <View style={styles.playerInfo}>
+              <Text style={styles.playerName}>{item.name}</Text>
+              <Text style={styles.gameCount}>
+                🎮 {item.totalGames || 0} gier
+              </Text>
             </View>
           </View>
         </LinearGradient>
@@ -222,6 +205,7 @@ const styles = {
     borderRadius: 15,
     padding: 15,
     marginHorizontal: 10,
+    minHeight: 80,
     ...globalStyles.shadow,
   },
   selectedCard: {
@@ -231,54 +215,24 @@ const styles = {
   playerHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
   },
   playerEmoji: {
     fontSize: 24,
-    marginRight: 10,
+    marginRight: 15,
+  },
+  playerInfo: {
+    flex: 1,
   },
   playerName: {
     fontSize: 18,
     fontWeight: 'bold',
     color: colors.surface,
-    flex: 1,
+    marginBottom: 5,
   },
-  playerStatsContainer: {
-    marginTop: 5,
-  },
-  statRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  statLabel: {
+  gameCount: {
     fontSize: 14,
     color: colors.surface,
-    fontWeight: '500',
-  },
-  statValue: {
-    fontSize: 16,
-    color: colors.surface,
-    fontWeight: 'bold',
-  },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-  },
-  statItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  statIcon: {
-    fontSize: 16,
-    marginBottom: 2,
-  },
-  statNumber: {
-    fontSize: 14,
-    color: colors.surface,
-    fontWeight: 'bold',
+    opacity: 0.9,
   },
   continueButton: {
     position: 'absolute',
