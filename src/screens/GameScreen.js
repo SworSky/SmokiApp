@@ -390,27 +390,37 @@ const GameScreen = ({ navigation, route }) => {
       console.log(`🔍 UNDO - Undid ${lastEntry.points} points for ${lastEntry.playerName}`);
       
     } else if (lastEntry.type === 'round_complete') {
-      // Undo round completion - go back to the last player of the previous round
+      // Undo round completion AND the last player's score in one action
       setCurrentRound(lastEntry.round);
-      setCurrentPlayerIndex(players.length - 1);
       
-      // Reset all players' currentRoundPoints based on the last round's data
-      const lastRoundData = roundHistory[roundHistory.length - 1];
-      if (lastRoundData) {
-        const updatedPlayers = players.map(player => {
-          const roundPlayerData = lastRoundData.players.find(p => p.name === player.name);
-          return {
-            ...player,
-            currentRoundPoints: roundPlayerData ? roundPlayerData.points : 0
-          };
-        });
-        setPlayers(updatePlayerRankings(updatedPlayers));
-      }
-      
-      // Remove this entry from score history
+      // Remove the round completion entry first
       setScoreHistory(prev => prev.slice(0, -1));
       
-      console.log(`🔍 UNDO - Undid round ${lastEntry.round} completion`);
+      // Now immediately undo the last score entry if it exists
+      if (scoreHistory.length > 1) {
+        const lastScoreEntry = scoreHistory[scoreHistory.length - 2]; // -2 because we just removed one
+        if (lastScoreEntry.type === 'score' && lastScoreEntry.round === lastEntry.round) {
+          // Undo this score entry too
+          const updatedPlayers = [...players];
+          const playerIndex = lastScoreEntry.playerIndex;
+          
+          // Subtract the points that were added
+          updatedPlayers[playerIndex] = {
+            ...updatedPlayers[playerIndex],
+            totalPoints: updatedPlayers[playerIndex].totalPoints - lastScoreEntry.points,
+            currentRoundPoints: lastScoreEntry.points // Set to the score we're undoing
+          };
+
+          // Set current player to the one whose score we just undid
+          setCurrentPlayerIndex(playerIndex);
+          setPlayers(updatePlayerRankings(updatedPlayers));
+          
+          // Remove this score entry from history too
+          setScoreHistory(prev => prev.slice(0, -1));
+          
+          console.log(`🔍 UNDO - Undid round completion AND ${lastScoreEntry.points} points for ${lastScoreEntry.playerName}`);
+        }
+      }
     }
 
     // Clear input
