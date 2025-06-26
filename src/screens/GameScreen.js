@@ -400,14 +400,14 @@ const GameScreen = ({ navigation, route }) => {
         
         <View style={styles.playerInfo}>
           <Text style={styles.playerName}>
-            {isCurrentPlayer ? '▶️ ' : '🐉 '}{item.name || 'Nieznany gracz'}
+            {`${isCurrentPlayer ? '▶️' : '🐉'} ${item.name || 'Nieznany gracz'}`}
           </Text>
           <Text style={styles.playerPoints}>
-            Punkty: {item.totalPoints || 0}
+            {`Punkty: ${item.totalPoints || 0}`}
           </Text>
-          {item.currentRoundPoints && item.currentRoundPoints > 0 && (
+          {typeof item.currentRoundPoints === 'number' && item.currentRoundPoints > 0 && (
             <Text style={styles.roundPoints}>
-              Runda: +{item.currentRoundPoints}
+              {`Runda: +${item.currentRoundPoints}`}
             </Text>
           )}
         </View>
@@ -433,7 +433,7 @@ const GameScreen = ({ navigation, route }) => {
             <View style={styles.finalResults}>
               {getGameWinners(players).map((player) => (
                 <Text key={player.id} style={styles.finalResultText}>
-                  {getPlaceDisplay(player.place)} {player.name} - {player.totalPoints} pkt
+                  {`${getPlaceDisplay(player.place)} ${player.name} - ${player.totalPoints} pkt`}
                 </Text>
               ))}
             </View>
@@ -464,6 +464,22 @@ const GameScreen = ({ navigation, route }) => {
     );
   }
 
+  // Safety check - don't render if we don't have valid players data
+  if (!players || players.length === 0) {
+    return (
+      <SafeAreaView style={{ flex: 1 }} edges={['left', 'right']}>
+        <LinearGradient
+          colors={dragonGradients.green}
+          style={globalStyles.container}
+        >
+          <View style={[globalStyles.padding, globalStyles.centered]}>
+            <Text style={globalStyles.title}>Ładowanie...</Text>
+          </View>
+        </LinearGradient>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={{ flex: 1 }} edges={['left', 'right']}>
       <LinearGradient
@@ -472,7 +488,7 @@ const GameScreen = ({ navigation, route }) => {
       >
         <View style={[globalStyles.padding, { flex: 1 }]}>
           <View style={styles.header}>
-            <Text style={globalStyles.title}>Runda {currentRound}</Text>
+            <Text style={globalStyles.title}>{`Runda ${currentRound}`}</Text>
           </View>
 
           <View style={styles.playersContainer}>
@@ -505,7 +521,7 @@ const GameScreen = ({ navigation, route }) => {
               </View>
               
               <Text style={styles.inputLabel}>
-                Punkty dla: {players[currentPlayerIndex]?.name} • Swipe down to minimize
+                {`Punkty dla: ${players[currentPlayerIndex]?.name || 'Nieznany gracz'} • Swipe down to minimize`}
               </Text>
               
               <View style={styles.displayContainer}>

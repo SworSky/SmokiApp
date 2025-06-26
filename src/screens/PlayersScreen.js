@@ -96,25 +96,26 @@ const PlayersScreen = ({ navigation }) => {
     );
   };
 
-  const renderPlayer = ({ item }) => (
+  const renderPlayer = ({ item }) => {
+    return (
     <LinearGradient
       colors={dragonGradients.ocean}
       style={[globalStyles.card, styles.playerCard]}
     >
       <View style={styles.playerHeader}>
-        <Text style={styles.playerName}>🐉 {item.name}</Text>
+        <Text style={styles.playerName}>{`🐉 ${item.name}`}</Text>
         <View style={styles.playerActions}>
           <TouchableOpacity 
             style={styles.actionButton}
             onPress={() => handleEditPlayer(item)}
           >
-            <Text style={styles.actionButtonText}>✏️</Text>
+            <Text style={styles.actionButtonText}>{`✏️`}</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.actionButton, styles.deleteButton]}
             onPress={() => handleDeletePlayer(item)}
           >
-            <Text style={styles.deleteButtonText}>🗑️</Text>
+            <Text style={styles.deleteButtonText}>{`🗑️`}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -138,7 +139,8 @@ const PlayersScreen = ({ navigation }) => {
         </View>
       </View>
     </LinearGradient>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={{ flex: 1 }} edges={['left', 'right']}>
@@ -146,86 +148,87 @@ const PlayersScreen = ({ navigation }) => {
         colors={dragonGradients.purple}
         style={globalStyles.container}
       >
-      <View style={[globalStyles.padding, globalStyles.flex1]}>
-        <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.backButtonText}>← Powrót</Text>
-          </TouchableOpacity>            <Text style={globalStyles.title}>Gracze</Text>
-        </View>
-
-        <TouchableOpacity 
-          style={[globalStyles.button, styles.addButton]}
-          onPress={handleAddPlayer}
-        >
-          <LinearGradient
-            colors={dragonGradients.gold}
-            style={styles.buttonGradient}
-          >
-            <Text style={globalStyles.buttonText}>➕ Dodaj Gracza</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-
-        <FlatList
-          data={players}
-          renderItem={renderPlayer}
-          keyExtractor={(item) => item.id.toString()}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContainer}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>🐲</Text>
-              <Text style={styles.emptyText}>Brak graczy</Text>
-              <Text style={styles.emptySubtext}>Dodaj pierwszego gracza!</Text>
-            </View>
-          }
-        />
-
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={modalVisible}
-          onRequestClose={() => setModalVisible(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <LinearGradient
-              colors={dragonGradients.fire}
-              style={styles.modalContent}
+        <View style={[globalStyles.padding, globalStyles.flex1]}>
+          <View style={styles.header}>
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
             >
-              <Text style={styles.modalTitle}>
-                {editingPlayer ? 'Edytuj Gracza' : 'Nowy Gracz'}
-              </Text>
-              
-              <TextInput
-                style={globalStyles.textInput}
-                placeholder="Imię gracza"
-                value={playerName}
-                onChangeText={setPlayerName}
-                maxLength={20}
-              />
-              
-              <View style={styles.modalButtons}>
-                <TouchableOpacity 
-                  style={[styles.cancelButton, styles.modalButton]}
-                  onPress={() => setModalVisible(false)}
-                >
-                  <Text style={styles.cancelButtonText}>Anuluj</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={[globalStyles.button, styles.modalButton, styles.saveButton]}
-                  onPress={handleSavePlayer}
-                >
-                  <Text style={[globalStyles.buttonText, styles.saveButtonText]}>Zapisz</Text>
-                </TouchableOpacity>
-              </View>
-            </LinearGradient>
+              <Text style={styles.backButtonText}>{`← Powrót`}</Text>
+            </TouchableOpacity>
+            <Text style={globalStyles.title}>Gracze</Text>
           </View>
-        </Modal>
-      </View>
-    </LinearGradient>
+          
+          <TouchableOpacity 
+            style={[globalStyles.button, styles.addButton]}
+            onPress={handleAddPlayer}
+          >
+            <LinearGradient
+              colors={dragonGradients.gold}
+              style={styles.buttonGradient}
+            >
+              <Text style={globalStyles.buttonText}>{`➕ Dodaj Gracza`}</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+          
+          <FlatList
+            data={players}
+            renderItem={renderPlayer}
+            keyExtractor={(item) => item.id.toString()}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContainer}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>{`🐲`}</Text>
+                <Text style={styles.emptyText}>Brak graczy</Text>
+                <Text style={styles.emptySubtext}>Dodaj pierwszego gracza!</Text>
+              </View>
+            }
+          />
+
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={modalVisible}
+            onRequestClose={() => setModalVisible(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <LinearGradient
+                colors={dragonGradients.fire}
+                style={styles.modalContent}
+              >
+                <Text style={styles.modalTitle}>
+                  {editingPlayer ? 'Edytuj Gracza' : 'Nowy Gracz'}
+                </Text>
+                
+                <TextInput
+                  style={globalStyles.textInput}
+                  placeholder="Imię gracza"
+                  value={playerName}
+                  onChangeText={setPlayerName}
+                  maxLength={20}
+                />
+                
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity 
+                    style={[styles.cancelButton, styles.modalButton]}
+                    onPress={() => setModalVisible(false)}
+                  >
+                    <Text style={styles.cancelButtonText}>Anuluj</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={[globalStyles.button, styles.modalButton, styles.saveButton]}
+                    onPress={handleSavePlayer}
+                  >
+                    <Text style={[globalStyles.buttonText, styles.saveButtonText]}>Zapisz</Text>
+                  </TouchableOpacity>
+                </View>
+              </LinearGradient>
+            </View>
+          </Modal>
+        </View>
+      </LinearGradient>
     </SafeAreaView>
   );
 };
