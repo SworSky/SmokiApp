@@ -42,6 +42,9 @@ const GameScreen = ({ navigation, route }) => {
   const [gameState, setGameState] = useState('playing'); // playing, ended
   const [isKeypadMinimized, setIsKeypadMinimized] = useState(false);
   const slideAnim = useRef(new Animated.Value(0)).current;
+  
+  // New: Track every score entry for easy undo
+  const [scoreHistory, setScoreHistory] = useState([]);
 
   // Pan responder for swipe down gesture
   const panResponder = PanResponder.create({
@@ -207,7 +210,7 @@ const GameScreen = ({ navigation, route }) => {
                 ]}
                 onPress={() => {
                   if (button.value === 'undo') {
-                    handlePreviousPlayer();
+                    handleUndo();
                   } else {
                     handleKeypadPress(button.value);
                   }
@@ -245,13 +248,32 @@ const GameScreen = ({ navigation, route }) => {
       return;
     }
 
+    if (points < 0) {
+      Alert.alert('Błąd', 'Punkty nie mogą być ujemne');
+      return;
+    }
+
     const updatedPlayers = [...players];
+    const currentPlayer = updatedPlayers[currentPlayerIndex];
+    
+    // Update player's points
     updatedPlayers[currentPlayerIndex] = {
-      ...updatedPlayers[currentPlayerIndex],
+      ...currentPlayer,
       currentRoundPoints: points,
-      totalPoints: updatedPlayers[currentPlayerIndex].totalPoints + points
+      totalPoints: currentPlayer.totalPoints + points
     };
 
+    // Add to score history for undo functionality
+    const newScoreEntry = {
+      playerIndex: currentPlayerIndex,
+      playerName: currentPlayer.name,
+      points: points,
+      round: currentRound,
+      timestamp: Date.now(),
+      type: 'score' // score entry
+    };
+    
+    setScoreHistory(prev => [...prev, newScoreEntry]);
     setPlayers(updatePlayerRankings(updatedPlayers));
     setRoundPoints('');
     setDisplayValue('0');
@@ -266,6 +288,14 @@ const GameScreen = ({ navigation, route }) => {
 
   const completeRound = async (updatedPlayers) => {
     try {
+      // Add round completion to score history
+      const roundCompleteEntry = {
+        type: 'round_complete',
+        round: currentRound,
+        timestamp: Date.now()
+      };
+      setScoreHistory(prev => [...prev, roundCompleteEntry]);
+
       // Save round to database
       const roundData = updatedPlayers.map(player => ({
         playerId: player.id,
@@ -328,11 +358,80 @@ const GameScreen = ({ navigation, route }) => {
     }
   };
 
+  // New simple undo system - tracks every action for easy reversal
+  const handleUndo = () => {
+    if (scoreHistory.length === 0) {
+      return; // Nothing to undo
+    }
+
+    const lastEntry = scoreHistory[scoreHistory.length - 1];
+    console.log('🔍 UNDO - Last entry:', lastEntry);
+
+    if (lastEntry.type === 'score') {
+      // Undo a score entry
+      const updatedPlayers = [...players];
+      const playerIndex = lastEntry.playerIndex;
+      
+      // Subtract the points that were added
+      updatedPlayers[playerIndex] = {
+        ...updatedPlayers[playerIndex],
+        totalPoints: updatedPlayers[playerIndex].totalPoints - lastEntry.points,
+        currentRoundPoints: Math.max(0, (updatedPlayers[playerIndex].currentRoundPoints || 0) - lastEntry.points)
+      };
+
+      // Set current player to the one whose score we just undid
+      setCurrentPlayerIndex(playerIndex);
+      setCurrentRound(lastEntry.round);
+      setPlayers(updatePlayerRankings(updatedPlayers));
+      
+      // Remove this entry from score history
+      setScoreHistory(prev => prev.slice(0, -1));
+      
+      console.log(`🔍 UNDO - Undid ${lastEntry.points} points for ${lastEntry.playerName}`);
+      
+    } else if (lastEntry.type === 'round_complete') {
+      // Undo round completion - go back to the last player of the previous round
+      setCurrentRound(lastEntry.round);
+      setCurrentPlayerIndex(players.length - 1);
+      
+      // Reset all players' currentRoundPoints based on the last round's data
+      const lastRoundData = roundHistory[roundHistory.length - 1];
+      if (lastRoundData) {
+        const updatedPlayers = players.map(player => {
+          const roundPlayerData = lastRoundData.players.find(p => p.name === player.name);
+          return {
+            ...player,
+            currentRoundPoints: roundPlayerData ? roundPlayerData.points : 0
+          };
+        });
+        setPlayers(updatePlayerRankings(updatedPlayers));
+      }
+      
+      // Remove this entry from score history
+      setScoreHistory(prev => prev.slice(0, -1));
+      
+      console.log(`🔍 UNDO - Undid round ${lastEntry.round} completion`);
+    }
+
+    // Clear input
+    setRoundPoints('');
+    setDisplayValue('0');
+  };
+
   const handlePreviousPlayer = () => {
+    console.log('🔍 UNDO - currentPlayerIndex:', currentPlayerIndex);
+    console.log('🔍 UNDO - players currentRoundPoints:', players.map(p => ({ name: p.name, currentRoundPoints: p.currentRoundPoints })));
+    console.log('🔍 UNDO - roundHistory length:', roundHistory.length);
+    console.log('🔍 UNDO - currentRound:', currentRound);
+    
+    // Check if we can undo a player's score from the current round
     if (currentPlayerIndex > 0) {
-      // Remove points from current player and go back
+      console.log('🔍 UNDO - Case 1: Middle of round');
+      // We're in the middle of a round - undo previous player's score
       const updatedPlayers = [...players];
       const prevPlayerIndex = currentPlayerIndex - 1;
+      
+      console.log('🔍 UNDO - Undoing player', prevPlayerIndex, 'name:', updatedPlayers[prevPlayerIndex].name, 'currentRoundPoints:', updatedPlayers[prevPlayerIndex].currentRoundPoints);
       
       updatedPlayers[prevPlayerIndex] = {
         ...updatedPlayers[prevPlayerIndex],
@@ -344,15 +443,100 @@ const GameScreen = ({ navigation, route }) => {
       setCurrentPlayerIndex(prevPlayerIndex);
       setRoundPoints('');
       setDisplayValue('0');
-    } else if (currentRound > 1 && roundHistory.length > 0) {
-      Alert.alert(
-        'Cofnij rundę',
-        'Czy chcesz cofnąć całą poprzednią rundę?',
-        [
-          { text: 'Anuluj', style: 'cancel' },
-          { text: 'Cofnij', onPress: undoLastRound }
-        ]
-      );
+      
+      console.log('🔍 UNDO - Case 1 completed, new currentPlayerIndex:', prevPlayerIndex);
+      setCurrentPlayerIndex(prevPlayerIndex);
+      setRoundPoints('');
+      setDisplayValue('0');
+    } else {
+      // currentPlayerIndex === 0
+      // First priority: Check if current (first) player has points to undo from current round activity
+      // Only process first player if they specifically have non-zero currentRoundPoints from an undo operation
+      if (players[0].currentRoundPoints && players[0].currentRoundPoints !== 0) {
+        console.log('🔍 UNDO - Case 2A: First player has non-zero currentRoundPoints:', players[0].currentRoundPoints);
+        // Undo the current (first) player's score
+        const updatedPlayers = [...players];
+        updatedPlayers[0] = {
+          ...updatedPlayers[0],
+          totalPoints: updatedPlayers[0].totalPoints - updatedPlayers[0].currentRoundPoints,
+          currentRoundPoints: 0
+        };
+        
+        setPlayers(updatePlayerRankings(updatedPlayers));
+        setRoundPoints('');
+        setDisplayValue('0');
+        // Keep currentPlayerIndex at 0
+      } else if (roundHistory.length > 0) {
+        console.log('🔍 UNDO - Case 2B: Using round history');
+        // No current round points for first player - undo from round history
+        const lastRound = roundHistory[roundHistory.length - 1];
+        console.log('🔍 UNDO - lastRound:', lastRound);
+        
+        if (lastRound.players.length === 0) {
+          console.log('🔍 UNDO - Empty round, removing it');
+          // This round is empty, remove it entirely
+          const updatedRoundHistory = [...roundHistory];
+          updatedRoundHistory.pop();
+          setRoundHistory(updatedRoundHistory);
+          setCurrentRound(currentRound - 1);
+          setCurrentPlayerIndex(0);
+          return;
+        }
+        
+        const lastPlayerEntry = lastRound.players[lastRound.players.length - 1];
+        console.log('🔍 UNDO - lastPlayerEntry:', lastPlayerEntry);
+        
+        const updatedPlayers = players.map(player => {
+          if (player.name === lastPlayerEntry.name) {
+            return {
+              ...player,
+              totalPoints: player.totalPoints - lastPlayerEntry.points,
+              currentRoundPoints: lastPlayerEntry.points
+            };
+          }
+          return player;
+        });
+        
+        // Update round history to remove the last player's entry
+        const updatedRoundHistory = [...roundHistory];
+        const currentRoundData = { ...updatedRoundHistory[updatedRoundHistory.length - 1] };
+        currentRoundData.players = currentRoundData.players.slice(0, -1);
+        
+        // Find the player index who just got their score undone
+        const undonePlayerIndex = players.findIndex(p => p.name === lastPlayerEntry.name);
+        console.log('🔍 UNDO - undonePlayerIndex:', undonePlayerIndex);
+        
+        if (currentRoundData.players.length === 0) {
+          // This round is now empty, remove it entirely
+          updatedRoundHistory.pop();
+          setRoundHistory(updatedRoundHistory);
+          setCurrentRound(currentRound - 1);
+          console.log('🔍 UNDO - Removed empty round, new round:', currentRound - 1);
+        } else {
+          // Round still has players, update it
+          updatedRoundHistory[updatedRoundHistory.length - 1] = currentRoundData;
+          setRoundHistory(updatedRoundHistory);
+          // Always decrement round when undoing from round history, because we're going back into the previous round
+          setCurrentRound(lastRound.round);
+          console.log('🔍 UNDO - Set round to lastRound.round:', lastRound.round);
+        }
+        
+        setPlayers(updatePlayerRankings(updatedPlayers));
+        setCurrentPlayerIndex(undonePlayerIndex);
+        setRoundPoints('');
+        setDisplayValue('0');
+      } else if (currentRound > 1) {
+        console.log('🔍 UNDO - Case 3: Show round undo alert');
+        // No round history but not round 1 - shouldn't happen, but show round undo option
+        Alert.alert(
+          'Cofnij rundę',
+          'Czy chcesz cofnąć całą poprzednią rundę?',
+          [
+            { text: 'Anuluj', style: 'cancel' },
+            { text: 'Cofnij', onPress: undoLastRound }
+          ]
+        );
+      }
     }
   };
 
