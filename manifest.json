@@ -8,23 +8,16 @@
   "start_url": "/",
   "theme_color": "#FF6B35",
   "orientation": "portrait",
-  "icons": [
+  "related_applications": [
     {
-      "src": "/pwa/apple-touch-icon/apple-touch-icon-180.png",
-      "sizes": "180x180",
-      "type": "image/png"
+      "platform": "itunes",
+      "id": "com.smokiapp.game"
     },
     {
-      "src": "/favicon-32.png",
-      "sizes": "32x32",
-      "type": "image/png"
-    },
-    {
-      "src": "/favicon-16.png",
-      "sizes": "16x16",
-      "type": "image/png"
+      "platform": "play",
+      "url": "http://play.google.com/store/apps/details?id=com.smokiapp.game",
+      "id": "com.smokiapp.game"
     }
   ],
-  "categories": ["games", "entertainment"],
-  "description": "Gra karciana Smoki - zliczanie punktów dla całej rodziny"
+  "prefer_related_applications": true
 }
