@@ -5,16 +5,26 @@ import { updatePlayerStats, saveGame, updateGame } from '../services/dbInterface
 import NumpadModal from '../components/NumpadModal';
 
 const GameScreenWeb = ({ navigation, route }) => {
-  const { gameData, resumeGame } = route.params;
+  const { gameData, resumeGame, selectedPlayers } = route.params;
   
   // Initialize players with proper state restoration
   const initializePlayers = () => {
-    if (resumeGame && gameData.players) {
+    if (resumeGame && gameData && gameData.players) {
       // When resuming, use the saved player data with scores and rounds
       return gameData.players;
-    } else {
-      // New game, initialize fresh
+    } else if (selectedPlayers) {
+      // New game from player selection, initialize fresh players with game structure
+      return selectedPlayers.map(player => ({
+        ...player,
+        totalScore: 0,
+        rounds: []
+      }));
+    } else if (gameData && gameData.players) {
+      // New game with gameData format
       return gameData.players;
+    } else {
+      // Fallback - shouldn't happen
+      return [];
     }
   };
   
@@ -63,28 +73,35 @@ const GameScreenWeb = ({ navigation, route }) => {
       }
       
       // Update player statistics with proper tie handling
-      try {
-        let currentPlace = 1;
-        let previousScore = null;
-        let playersAtSamePlace = 0;
-        
-        for (let i = 0; i < sortedPlayers.length; i++) {
-          const player = sortedPlayers[i];
+      // Only save statistics if at least one player has score higher than 50
+      const hasPlayerWithHighScore = sortedPlayers.some(player => player.totalScore > 50);
+      
+      if (hasPlayerWithHighScore) {
+        try {
+          let currentPlace = 1;
+          let previousScore = null;
+          let playersAtSamePlace = 0;
           
-          // If this player has the same score as previous, they get the same place
-          if (previousScore !== null && player.totalScore !== previousScore) {
-            currentPlace += playersAtSamePlace;
-            playersAtSamePlace = 1;
-          } else {
-            playersAtSamePlace++;
+          for (let i = 0; i < sortedPlayers.length; i++) {
+            const player = sortedPlayers[i];
+            
+            // If this player has the same score as previous, they get the same place
+            if (previousScore !== null && player.totalScore !== previousScore) {
+              currentPlace += playersAtSamePlace;
+              playersAtSamePlace = 1;
+            } else {
+              playersAtSamePlace++;
+            }
+            
+            await updatePlayerStats(player.id, currentPlace);
+            previousScore = player.totalScore;
           }
-          
-          await updatePlayerStats(player.id, currentPlace);
-          previousScore = player.totalScore;
+          console.log('Player statistics updated successfully with tie handling');
+        } catch (error) {
+          console.error('Error updating player statistics:', error);
         }
-        console.log('Player statistics updated successfully with tie handling');
-      } catch (error) {
-        console.error('Error updating player statistics:', error);
+      } else {
+        console.log('No player has score higher than 50, skipping statistics update');
       }
     }
   };

@@ -3,7 +3,6 @@ import { Platform } from 'react-native';
 import MainMenuScreenWeb from './src/screens/MainMenuScreenWeb';
 import PlayersScreenWeb from './src/screens/PlayersScreenWeb';
 import PlayerSelectionScreenWeb from './src/screens/PlayerSelectionScreenWeb';
-import PlayerOrderScreenWeb from './src/screens/PlayerOrderScreenWeb';
 import GameScreenWeb from './src/screens/GameScreenWeb';
 
 // Simple state-based navigation for web
@@ -33,8 +32,6 @@ export default function App() {
       return <PlayersScreenWeb navigation={navigation} />;
     case 'PlayerSelection':
       return <PlayerSelectionScreenWeb navigation={navigation} route={{ params: screenParams }} />;
-    case 'PlayerOrder':
-      return <PlayerOrderScreenWeb navigation={navigation} route={{ params: screenParams }} />;
     case 'Game':
       return <GameScreenWeb navigation={navigation} route={{ params: screenParams }} />;
     case 'MainMenu':

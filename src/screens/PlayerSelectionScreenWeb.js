@@ -49,8 +49,8 @@ const PlayerSelectionScreenWeb = ({ navigation }) => {
       return;
     }
 
-    // Navigate to player order screen
-    navigation.navigate('PlayerOrder', { selectedPlayers });
+    // Go directly to game with selected players
+    navigation.navigate('Game', { selectedPlayers });
   };
 
   const renderPlayer = (player) => {

@@ -81,7 +81,14 @@ const MainMenuScreenWeb = ({ navigation }) => {
   }
 
   return (
-    <View style={[globalStyles.container, globalStyles.centered, { backgroundColor: colors.primary }]}>
+    <View style={[
+      globalStyles.container, 
+      globalStyles.centered, 
+      { 
+        backgroundColor: colors.primary,
+        overflow: 'hidden' // Prevent scrolling on web
+      }
+    ]}>
       <Text style={{ 
         fontSize: 48, 
         fontWeight: 'bold', 

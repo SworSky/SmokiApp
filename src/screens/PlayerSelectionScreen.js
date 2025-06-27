@@ -51,7 +51,8 @@ const PlayerSelectionScreen = ({ navigation }) => {
       return;
     }
     
-    navigation.navigate('PlayerOrder', { selectedPlayers });
+    // Go directly to game with selected players
+    navigation.navigate('Game', { selectedPlayers });
   };
 
   const renderPlayer = ({ item }) => {
