@@ -144,7 +144,7 @@ const PlayerSelectionScreenWeb = ({ navigation }) => {
             onPress={startGame}
           >
             <Text style={styles.startButtonText}>
-              ➡️ Ustaw kolejność ({selectedPlayers.length} graczy)
+              🎮 Rozpocznij grę ({selectedPlayers.length} graczy)
             </Text>
           </TouchableOpacity>
         </View>

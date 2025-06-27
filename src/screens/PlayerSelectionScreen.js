@@ -144,7 +144,7 @@ const PlayerSelectionScreen = ({ navigation }) => {
                   style={styles.buttonGradient}
                 >
                   <Text style={globalStyles.buttonText}>
-                    Dalej → ({selectedPlayers.length} graczy)
+                    Rozpocznij grę → ({selectedPlayers.length} graczy)
                   </Text>
                 </LinearGradient>
               </TouchableOpacity>
