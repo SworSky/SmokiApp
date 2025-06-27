@@ -31,7 +31,24 @@ const PlayersScreen = ({ navigation }) => {
   const loadPlayers = async () => {
     try {
       const playersData = await getAllPlayers();
-      setPlayers(playersData);
+      // Sort players by best performance: 1st place first, then 2nd place, then 3rd place, then total games
+      const sortedPlayers = playersData.sort((a, b) => {
+        // Compare by first place count (descending)
+        if (a.firstPlace !== b.firstPlace) {
+          return b.firstPlace - a.firstPlace;
+        }
+        // If same first places, compare by second place count (descending)
+        if (a.secondPlace !== b.secondPlace) {
+          return b.secondPlace - a.secondPlace;
+        }
+        // If same second places, compare by third place count (descending)
+        if (a.thirdPlace !== b.thirdPlace) {
+          return b.thirdPlace - a.thirdPlace;
+        }
+        // If all places are equal, compare by total games (descending)
+        return b.totalGames - a.totalGames;
+      });
+      setPlayers(sortedPlayers);
     } catch (error) {
       console.error('Error loading players:', error);
       Alert.alert('Błąd', 'Nie udało się załadować graczy');

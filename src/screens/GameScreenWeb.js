@@ -362,7 +362,7 @@ const GameScreenWeb = ({ navigation, route }) => {
 
       {/* Players */}
       <ScrollView style={styles.playersList} contentContainerStyle={{ padding: 20 }}>
-        {players.map(renderPlayerCard)}
+        {[...players].sort((a, b) => a.totalScore - b.totalScore).map(renderPlayerCard)} {/* Sort by current score (lowest first = best) */}
       </ScrollView>
 
       {/* Submit Round Button */}

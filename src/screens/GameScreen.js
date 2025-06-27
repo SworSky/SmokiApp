@@ -687,7 +687,7 @@ const GameScreen = ({ navigation, route }) => {
 
           <View style={styles.playersContainer}>
             <FlatList
-              data={players}
+              data={[...players].sort((a, b) => a.totalPoints - b.totalPoints)} // Sort by current score (lowest first = best)
               renderItem={renderPlayer}
               keyExtractor={(item) => item.id.toString()}
               contentContainerStyle={[
