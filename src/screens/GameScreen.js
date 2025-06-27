@@ -27,7 +27,7 @@ import {
   updateGame, 
   addGameRound, 
   updatePlayerStats 
-} from '../services/database';
+} from '../services/dbInterface';
 
 const GameScreen = ({ navigation, route }) => {
   const { gameData, resumeGame } = route.params;

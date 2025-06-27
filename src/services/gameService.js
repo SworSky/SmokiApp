@@ -1,10 +1,10 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import storage from './storageService';
 
 const GAME_STATE_KEY = 'smoki_game_state';
 
 export const saveGameState = async (gameState) => {
   try {
-    await AsyncStorage.setItem(GAME_STATE_KEY, JSON.stringify(gameState));
+    await storage.setItem(GAME_STATE_KEY, JSON.stringify(gameState));
   } catch (error) {
     console.error('Error saving game state:', error);
   }
@@ -12,7 +12,7 @@ export const saveGameState = async (gameState) => {
 
 export const loadGameState = async () => {
   try {
-    const gameState = await AsyncStorage.getItem(GAME_STATE_KEY);
+    const gameState = await storage.getItem(GAME_STATE_KEY);
     return gameState ? JSON.parse(gameState) : null;
   } catch (error) {
     console.error('Error loading game state:', error);
@@ -22,7 +22,7 @@ export const loadGameState = async () => {
 
 export const clearGameState = async () => {
   try {
-    await AsyncStorage.removeItem(GAME_STATE_KEY);
+    await storage.removeItem(GAME_STATE_KEY);
   } catch (error) {
     console.error('Error clearing game state:', error);
   }

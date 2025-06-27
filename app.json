@@ -25,7 +25,17 @@
       "edgeToEdgeEnabled": true
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "name": "Smoki - by Maślak",
+      "shortName": "Smoki",
+      "lang": "pl",
+      "scope": "/",
+      "startUrl": "/",
+      "display": "standalone",
+      "orientation": "portrait",
+      "themeColor": "#FF6B35",
+      "backgroundColor": "#FF6B35",
+      "bundler": "webpack"
     },
     "plugins": [
       "expo-sqlite"

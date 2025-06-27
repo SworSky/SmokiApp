@@ -16,7 +16,7 @@ import {
   addPlayer, 
   updatePlayer, 
   deletePlayer 
-} from '../services/database';
+} from '../services/dbInterface';
 
 const PlayersScreen = ({ navigation }) => {
   const [players, setPlayers] = useState([]);

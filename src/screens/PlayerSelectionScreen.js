@@ -9,7 +9,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { globalStyles, colors, dragonGradients } from '../styles/globalStyles';
-import { getAllPlayers } from '../services/database';
+import { getAllPlayers } from '../services/dbInterface';
 
 const PlayerSelectionScreen = ({ navigation }) => {
   const [players, setPlayers] = useState([]);

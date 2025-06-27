@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, ImageBackground, Alert } from 'react-nati
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { globalStyles, colors, dragonGradients } from '../styles/globalStyles';
-import { initDatabase, getActiveGame } from '../services/database';
+import { initDatabase, getActiveGame } from '../services/dbInterface';
 import { loadGameState } from '../services/gameService';
 
 const RainbowText = ({ text }) => {
@@ -29,6 +29,7 @@ const RainbowText = ({ text }) => {
 const MainMenuScreen = ({ navigation }) => {
   const [hasActiveGame, setHasActiveGame] = useState(false);
   const [activeGameData, setActiveGameData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     initializeApp();
@@ -77,10 +78,16 @@ const MainMenuScreen = ({ navigation }) => {
 
   const initializeApp = async () => {
     try {
+      console.log('Initializing app...');
       await initDatabase();
+      console.log('Database initialized successfully');
       await checkForActiveGame();
+      console.log('Active game check completed');
     } catch (error) {
       console.error('Error initializing app:', error);
+      // Don't block the UI, just log the error
+    } finally {
+      setIsLoading(false);
     }
   };
 
