@@ -1,0 +1,30 @@
+{
+  "background_color": "#FF6B35",
+  "display": "standalone",
+  "lang": "pl",
+  "name": "Smoki - by Maślak",
+  "scope": "/",
+  "short_name": "Smoki",
+  "start_url": "/",
+  "theme_color": "#FF6B35",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/pwa/apple-touch-icon/apple-touch-icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["games", "entertainment"],
+  "description": "Gra karciana Smoki - zliczanie punktów dla całej rodziny"
+}
