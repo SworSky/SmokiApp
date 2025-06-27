@@ -29,13 +29,17 @@ module.exports = async function (env, argv) {
     'react-native$': 'react-native-web',
   };
 
-  // Set public path for GitHub Pages deployment
-  config.output.publicPath = '/SmokiApp/';
+  // Set public path dynamically based on environment
+  // Use /SmokiApp/ for GitHub Pages deployment, / for development
+  const isGitHubPages = process.env.GITHUB_PAGES === 'true';
+  const publicPath = isGitHubPages ? '/SmokiApp/' : '/';
+  
+  config.output.publicPath = publicPath;
   
   // Fix asset paths for GitHub Pages
   config.plugins.forEach(plugin => {
     if (plugin.constructor.name === 'HtmlWebpackPlugin') {
-      plugin.options.publicPath = '/SmokiApp/';
+      plugin.options.publicPath = publicPath;
     }
   });
 
