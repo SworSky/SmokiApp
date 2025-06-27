@@ -1,0 +1,23 @@
+{
+  "background_color": "#FF6B35",
+  "display": "standalone",
+  "lang": "pl",
+  "name": "Smoki - by Maślak",
+  "scope": "/SmokiApp/",
+  "short_name": "Smoki",
+  "start_url": "/SmokiApp/?v=2",
+  "theme_color": "#FF6B35",
+  "orientation": "portrait",
+  "related_applications": [
+    {
+      "platform": "itunes",
+      "id": "com.smokiapp.game"
+    },
+    {
+      "platform": "play",
+      "url": "http://play.google.com/store/apps/details?id=com.smokiapp.game",
+      "id": "com.smokiapp.game"
+    }
+  ],
+  "prefer_related_applications": true
+}
