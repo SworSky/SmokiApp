@@ -3,9 +3,9 @@
   "display": "standalone",
   "lang": "pl",
   "name": "Smoki - by Maślak",
-  "scope": "/SmokiApp/",
+  "scope": "/",
   "short_name": "Smoki",
-  "start_url": "/SmokiApp/",
+  "start_url": "/",
   "theme_color": "#FF6B35",
   "orientation": "portrait",
   "related_applications": [
