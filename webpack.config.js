@@ -29,5 +29,15 @@ module.exports = async function (env, argv) {
     'react-native$': 'react-native-web',
   };
 
+  // Set public path for GitHub Pages deployment
+  config.output.publicPath = '/SmokiApp/';
+  
+  // Fix asset paths for GitHub Pages
+  config.plugins.forEach(plugin => {
+    if (plugin.constructor.name === 'HtmlWebpackPlugin') {
+      plugin.options.publicPath = '/SmokiApp/';
+    }
+  });
+
   return config;
 };
